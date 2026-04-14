@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fiche Mémo IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<style>
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--border:#252533;
+  --accent:#7c6fff;--accent2:#a78bfa;--text:#e8e8f0;--muted:#7777aa;
+  --green:#22d3a5;--yellow:#fbbf24;--red:#f87171;--blue:#60a5fa;
+  --card:#16161f;--glow:rgba(124,111,255,.18);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+
+/* NAV */
+nav{display:flex;align-items:center;gap:12px;padding:16px 32px;border-bottom:1px solid var(--border);background:rgba(13,13,18,.96);backdrop-filter:blur(16px);position:sticky;top:0;z-index:200;}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#c084fc);display:flex;align-items:center;justify-content:center;font-size:20px}
+nav h1{font-family:'Sora',sans-serif;font-size:1.05rem;background:linear-gradient(120deg,#fff 40%,var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.badge{background:var(--bg3);border:1px solid var(--border);padding:4px 12px;border-radius:999px;font-size:.72rem;color:var(--muted)}
+.badge b{color:var(--green)}
+.btn-pom-nav{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:7px 14px;color:var(--muted);font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px}
+.btn-pom-nav:hover{color:var(--text);border-color:var(--accent)}
+
+/* WRAP */
+.wrap{max-width:1100px;margin:0 auto;padding:32px 20px 100px;display:flex;flex-direction:column;gap:24px}
+
+/* INPUT CARD */
+.input-card{background:rgba(22,22,31,.8);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:18px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.card-title{font-family:'Sora',sans-serif;font-size:.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:7px;height:7px;background:var(--accent);border-radius:50%}
+
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--bg2);padding:4px;border-radius:11px;width:fit-content}
+.tab{padding:8px 20px;border:none;background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:.83rem;font-weight:500;border-radius:8px;cursor:pointer;transition:all .2s}
+.tab.on{background:var(--accent);color:#fff;font-weight:600}
+.tab-pane{display:none}.tab-pane.on{display:block}
+
+/* FIELDS */
+label{font-size:.78rem;color:var(--muted);font-weight:500;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:.87rem;outline:none;transition:border .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+select option{background:var(--bg2)}
+textarea{min-height:220px;resize:vertical;line-height:1.65}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+
+/* PDF DROP */
+.drop{border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.88rem;position:relative;background:var(--bg2)}
+.drop:hover,.drop.drag{border-color:var(--accent);color:var(--accent);background:var(--glow)}
+.drop .di{font-size:2.8rem;margin-bottom:10px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-ok{margin-top:12px;background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.3);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--green);display:none}
+
+/* BTN */
+.btn-go{padding:15px;background:linear-gradient(135deg,var(--accent),#9d7dff);border:none;border-radius:13px;color:#fff;font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(124,111,255,.3);width:100%}
+.btn-go:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(124,111,255,.5)}
+.btn-go:active{transform:translateY(0)}
+.btn-go:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* LOADING avec progress bar */
+.loading-state{display:none;background:rgba(22,22,31,.8);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:48px 56px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.loading-state.on{display:block}
+.spin{width:48px;height:48px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-progress-wrap{background:var(--bg2);border-radius:999px;height:6px;overflow:hidden;margin:0 auto 10px;max-width:320px}
+.gen-bar{height:100%;background:linear-gradient(90deg,var(--accent),#c084fc);border-radius:999px;width:5%;transition:width .8s ease;box-shadow:0 0 12px rgba(124,111,255,.5)}
+.gen-step{font-size:.8rem;color:var(--accent2);margin-bottom:18px;min-height:18px}
+.loading-state p{color:var(--muted);font-size:.88rem;line-height:1.8;margin-top:14px}
+.loading-state strong{color:var(--text)}
+
+/* SKELETON */
+.skeleton-cards{display:none;flex-direction:column;gap:16px}
+.skeleton-cards.on{display:flex}
+.sk-card{background:rgba(22,22,31,.8);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.sk{background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:7px;height:13px}
+.sk.h24{height:24px}.sk.h32{height:32px}.sk.w30{width:30%}.sk.w50{width:50%}.sk.w70{width:70%}.sk.w90{width:90%}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ERROR */
+.err-box{display:none;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:22px 26px}
+.err-box.on{display:block}
+.err-box h3{color:var(--red);font-size:.92rem;margin-bottom:8px}
+.err-box p{color:var(--muted);font-size:.83rem;line-height:1.65}
+.err-box code{display:block;margin-top:10px;background:var(--bg2);padding:10px 14px;border-radius:8px;font-size:.78rem;color:var(--yellow);word-break:break-all}
+
+/* MEMO */
+.memo{display:none}
+.memo.on{display:flex;flex-direction:column;gap:20px}
+
+/* Animations d'entrée en cascade */
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.memo.on > *{animation:fadeUp .5s ease forwards;opacity:0}
+.memo.on > *:nth-child(1){animation-delay:.05s}
+.memo.on > *:nth-child(2){animation-delay:.12s}
+.memo.on > *:nth-child(3){animation-delay:.19s}
+.memo.on > *:nth-child(4){animation-delay:.26s}
+.memo.on > *:nth-child(5){animation-delay:.33s}
+.memo.on > *:nth-child(6){animation-delay:.40s}
+.memo.on > *:nth-child(7){animation-delay:.47s}
+.memo.on > *:nth-child(8){animation-delay:.54s}
+.memo.on > *:nth-child(9){animation-delay:.61s}
+.memo.on > *:nth-child(10){animation-delay:.68s}
+.memo.on > *:nth-child(11){animation-delay:.75s}
+
+/* Header */
+.memo-top{background:linear-gradient(135deg,rgba(124,111,255,.18),rgba(167,139,250,.08));border:1px solid rgba(124,111,255,.35);border-radius:18px;padding:28px 32px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;backdrop-filter:blur(20px)}
+.memo-top h2{font-family:'Sora',sans-serif;font-size:1.65rem;background:linear-gradient(120deg,#fff,var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.memo-top .sub{color:var(--muted);font-size:.84rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:3px 12px;font-size:.75rem;color:var(--muted)}
+.memo-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.btn-sm{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:8px 16px;color:var(--muted);font-size:.78rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px;backdrop-filter:blur(8px)}
+.btn-sm:hover{color:var(--text);border-color:var(--accent);background:rgba(124,111,255,.1);transform:translateY(-1px)}
+
+/* Section card – glassmorphism */
+.sec{background:rgba(22,22,31,.75);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.04);transition:box-shadow .3s}
+.sec:hover{box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.sec-head{padding:14px 22px;background:rgba(19,19,26,.8);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;font-family:'Sora',sans-serif;font-size:.9rem;font-weight:600}
+.sec-head-left{display:flex;align-items:center;gap:10px}
+.sec-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sec-body{padding:22px 26px}
+
+/* Bouton copier */
+.btn-copy{background:none;border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:4px 10px;color:var(
+  --muted);font-size:.7rem;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-copy:hover{color:var(--green);border-color:var(--green)}
+.btn-copy.ok{color:var(--green);border-color:var(--green)}
+
+/* Résumé */
+.resume-text p{color:#cccce0;line-height:1.85;margin-bottom:12px;font-size:.91rem}
+.resume-text p:last-child{margin-bottom:0}
+
+/* Concepts */
+.concepts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.cc{background:rgba(19,19,26,.8);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 16px;transition:all .25s;cursor:default}
+.cc:hover{border-color:var(--accent);transform:translateY(-3px) scale(1.01);box-shadow:0 0 0 1px var(--accent),0 8px 24px rgba(124,111,255,.2)}
+.cc-title{font-weight:600;font-size:.83rem;color:var(--accent2);margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.cc-title::before{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%;flex-shrink:0}
+.cc-body{font-size:.80rem;color:#9999bb;line-height:1.6}
+
+/* Plan */
+.plan-row{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.plan-row:last-child{border:none}
+.plan-n{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0}
+.plan-t{font-size:.87rem;color:var(--text);font-weight:500;line-height:1.5}
+.plan-s{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.6}
+
+/* Infos clés */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.info-card{border-radius:12px;padding:15px 17px;border:1px solid;transition:transform .2s}
+.info-card:hover{transform:translateY(-2px)}
+.info-card.purple{background:rgba(124,111,255,.08);border-color:rgba(124,111,255,.3)}
+.info-card.yellow{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.3)}
+.info-card.green{background:rgba(34,211,165,.07);border-color:rgba(34,211,165,.3)}
+.info-card.blue{background:rgba(96,165,250,.07);border-color:rgba(96,165,250,.3)}
+.info-card.red{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.3)}
+.info-card-icon{font-size:1.3rem;margin-bottom:7px}
+.info-card-title{font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;margin-bottom:5px}
+.info-card.purple .info-card-title{color:var(--accent2)}
+.info-card.yellow .info-card-title{color:var(--yellow)}
+.info-card.green .info-card-title{color:var(--green)}
+.info-card.blue .info-card-title{color:var(--blue)}
+.info-card.red .info-card-title{color:var(--red)}
+.info-card-body{font-size:.80rem;color:#9999bb;line-height:1.65}
+
+/* Conseils */
+.tip{background:rgba(34,211,165,.07);border:1px solid rgba(34,211,165,.2);border-radius:10px;padding:12px 15px;font-size:.85rem;color:#aaaacc;line-height:1.65;display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;transition:all .2s}
+.tip:last-child{margin-bottom:0}
+.tip:hover{border-color:rgba(34,211,165,.4);transform:translateX(4px)}
+.tip-i{font-size:1.1rem;flex-shrink:0}
+
+/* Erreurs classiques */
+.erreurs-list{display:flex;flex-direction:column;gap:9px}
+.erreur-item{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:12px 15px;font-size:.85rem;color:#cccce0;line-height:1.65;display:flex;gap:10px;align-items:flex-start;transition:all .2s}
+.erreur-item:hover{border-color:rgba(248,113,113,.4);transform:translateX(4px)}
+.erreur-i{color:var(--red);flex-shrink:0}
+
+/* Questions d'examen */
+.exam-list{display:flex;flex-direction:column;gap:9px}
+.exam-item{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:12px 15px;font-size:.85rem;color:#cccce0;line-height:1.65;display:flex;gap:10px;align-items:flex-start;transition:all .2s}
+.exam-item:hover{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.09)}
+.exam-n{color:var(--yellow);font-weight:700;flex-shrink:0;font-family:'Sora',sans-serif;font-size:.8rem;min-width:20px}
+
+/* Section accents */
+.s-resume .sec-head{border-left:3px solid var(--accent)}
+.s-resume .sec-icon{background:rgba(124,111,255,.15);color:var(--accent2)}
+.s-concepts .sec-head{border-left:3px solid var(--yellow)}
+.s-concepts .sec-icon{background:rgba(251,191,36,.12);color:var(--yellow)}
+.s-plan .sec-head{border-left:3px solid var(--green)}
+.s-plan .sec-icon{background:rgba(34,211,165,.12);color:var(--green)}
+.s-memo .sec-head{border-left:3px solid var(--blue)}
+.s-memo .sec-icon{background:rgba(96,165,250,.12);color:var(--blue)}
+.s-tips .sec-head{border-left:3px solid #c084fc}
+.s-tips .sec-icon{background:rgba(192,132,252,.12);color:#c084fc}
+.s-erreurs .sec-head{border-left:3px solid var(--red)}
+.s-erreurs .sec-icon{background:rgba(248,113,113,.12);color:var(--red)}
+.s-exam .sec-head{border-left:3px solid var(--yellow)}
+.s-exam .sec-icon{background:rgba(251,191,36,.12);color:var(--yellow)}
+
+/* Compteur */
+.char-counter{font-size:.75rem;color:var(--muted);text-align:right;margin-top:5px;transition:color .2s}
+.char-counter.warn{color:var(--yellow)}
+.char-counter.danger{color:var(--red)}
+
+/* Bouton flottant */
+.btn-new{position:fixed;bottom:28px;right:28px;z-index:300;background:linear-gradient(135deg,var(--accent),#9d7dff);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(124,111,255,.5);display:none;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s}
+.btn-new:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(124,111,255,.6)}
+.btn-new.visible{display:flex}
+
+/* HISTORIQUE */
+.histo-section{background:rgba(22,22,31,.75);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.histo-head{padding:14px 24px;background:rgba(19,19,26,.8);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.histo-head-left{display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:600}
+.histo-icon{width:28px;height:28px;border-radius:8px;background:rgba(251,191,36,.12);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-size:13px}
+.histo-toggle{color:var(--muted);font-size:.75rem;transition:transform .2s}
+.histo-toggle.open{transform:rotate(180deg)}
+.histo-body{padding:16px 20px;display:none}
+.histo-body.open{display:block}
+.histo-list{display:flex;flex-wrap:wrap;gap:10px}
+.histo-card{background:rgba(19,19,26,.8);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 16px;cursor:pointer;transition:all .2s;min-width:180px;max-width:220px;flex:1}
+.histo-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,111,255,.15)}
+.histo-titre{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.histo-meta{font-size:.72rem;color:var(--muted)}
+
+/* FLASHCARDS */
+.fc-section{background:rgba(22,22,31,.75);backdrop-filter:blur(20px);border:1px solid rgba(34,211,165,.25);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.fc-section .sec-head{border-left:3px solid var(--green);background:rgba(19,19,26,.8)}
+.fc-section .sec-icon{background:rgba(34,211,165,.12);color:var(--green)}
+.fc-body{padding:26px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.fc-stats-row{display:flex;gap:12px;font-size:.76rem}
+.fc-stat{padding:4px 12px;border-radius:999px;border:1px solid}
+.fc-stat.known{background:rgba(34,211,165,.08);border-color:rgba(34,211,165,.3);color:var(--green)}
+.fc-stat.review{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3);color:var(--red)}
+.fc-stat.total{background:rgba(119,119,170,.08);border-color:rgba(119,119,170,.3);color:var(--muted)}
+.fc-bar-wrap{width:100%;max-width:520px;height:4px;background:var(--bg2);border-radius:999px;overflow:hidden}
+.fc-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:999px;transition:width .4s ease;width:0%}
+.fc-progress{font-size:.78rem;color:var(--muted)}
+.fc-wrap{perspective:1000px;width:100%;max-width:520px;height:200px;cursor:pointer}
+.fc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .5s}
+.fc-inner.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
+.fc-front{background:linear-gradient(135deg,rgba(34,211,165,.12),rgba(34,211,165,.05));border:1px solid rgba(34,211,165,.3)}
+.fc-back{background:linear-gradient(135deg,rgba(124,111,255,.12),rgba(124,111,255,.05));border:1px solid rgba(124,111,255,.3);transform:rotateY(180deg)}
+.fc-front .fc-text{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text)}
+.fc-back .fc-text{font-size:.88rem;color:#cccce0;line-height:1.7}
+.fc-hint{font-size:.72rem;color:var(--muted);margin-top:-8px}
+.fc-keys{font-size:.7rem;color:var(--muted);opacity:.7}
+.fc-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.fc-btn{background:rgba(19,19,26,.8);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:8px 18px;color:var(--muted);font-size:.82rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.fc-btn:hover:not(:disabled){color:var(--text);border-color:var(--accent)}
+.fc-btn:disabled{opacity:.3;cursor:not-allowed}
+.fc-btn.know{background:rgba(34,211,165,.1);border-color:rgba(34,211,165,.3);color:var(--green)}
+.fc-btn.know:hover{background:rgba(34,211,165,.2)}
+.fc-btn.dontknow{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
+.fc-btn.dontknow:hover{background:rgba(248,113,113,.2)}
+.fc-filter{display:flex;gap:8px}
+.fc-filter-btn{background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:4px 14px;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;font-size:.74rem}
+.fc-filter-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* QUIZ */
+.quiz-section{background:rgba(22,22,31,.75);backdrop-filter:blur(20px);border:1px solid rgba(96,165,250,.25);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.quiz-section .sec-head{border-left:3px solid var(--blue);background:rgba(19,19,26,.8)}
+.quiz-section .sec-icon{background:rgba(96,165,250,.12);color:var(--blue)}
+.quiz-body{padding:26px}
+.quiz-config{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.quiz-config label{font-size:.8rem;color:var(--muted);margin-bottom:0;flex-shrink:0}
+.quiz-count-sel{width:auto;padding:7px 12px;font-size:.82rem}
+.quiz-start{text-align:center;padding:12px 0}
+.quiz-start p{color:var(--muted);font-size:.85rem;margin-bottom:14px}
+.btn-quiz-start{background:linear-gradient(135deg,var(--blue),#3b82f6);border:none;border-radius:11px;padding:11px 28px;color:#fff;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(96,165,250,.3)}
+.btn-quiz-start:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(96,165,250,.4)}
+.btn-quiz-start:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.quiz-loading{display:none;text-align:center;padding:16px 0;color:var(--muted);font-size:.86rem}
+.quiz-loading .spin{width:32px;height:32px;margin:0 auto 10px;border-width:2px}
+.quiz-q{display:none}
+.quiz-prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.quiz-prog{font-size:.75rem;color:var(--muted)}
+.quiz-prog-bar-wrap{height:4px;background:var(--bg2);border-radius:999px;overflow:hidden;margin-bottom:16px}
+.quiz-prog-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--accent));border-radius:999px;transition:width .4s ease}
+.quiz-question{font-family:'Sora',sans-serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:16px;line-height:1.55}
+.quiz-choices{display:flex;flex-direction:column;gap:9px}
+.quiz-choice{background:rgba(19,19,26,.8);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:11px 16px;text-align:left;cursor:pointer;font-family:'Inter',sans-serif;font-size:.86rem;color:var(--text);transition:all .2s;width:100%}
+.quiz-choice:hover:not(:disabled){border-color:var(--accent);background:rgba(124,111,255,.08)}
+.quiz-choice.correct{background:rgba(34,211,165,.1);border-color:var(--green);color:var(--green)}
+.quiz-choice.wrong{background:rgba(248,113,113,.1);border-color:var(--red);color:var(--red)}
+.quiz-choice:disabled{cursor:default}
+.quiz-explication{margin-top:12px;font-size:.82rem;color:var(--muted);line-height:1.6;padding:10px 14px;background:rgba(19,19,26,.8);border-radius:8px;display:none;border-left:3px solid var(--accent)}
+.btn-quiz-next{margin-top:14px;background:var(--accent);border:none;border-radius:9px;padding:9px 22px;color:#fff;font-family:'Sora',sans-serif;font-size:.83rem;font-weight:700;cursor:pointer;display:none;transition:all .2s}
+.btn-quiz-next:hover{background:#9d7dff;transform:translateY(-1px)}
+
+/* Score avec ring animé */
+.quiz-score{display:none;text-align:center;padding:18px 0}
+.score-ring-wrap{display:flex;justify-content:center;margin-bottom:18px}
+.score-ring{width:130px;height:130px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--green) 0deg,var(--bg3) 0deg);transition:background 1.2s ease;box-shadow:0 0 30px rgba(34,211,165,.15)}
+.score-ring-inner{width:96px;height:96px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.score-ring-num{font-family:'Sora',sans-serif;font-size:1.55rem;font-weight:800;background:linear-gradient(120deg,var(--green),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:popIn .6s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.score-ring-label{font-size:.62rem;color:var(--muted)}
+.quiz-score-msg{color:var(--text);font-size:.92rem;font-weight:500;margin-bottom:6px}
+.quiz-score-detail{color:var(--muted);font-size:.82rem;margin-bottom:18px}
+.quiz-score-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-quiz-retry{background:rgba(19,19,26,.8);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:9px 22px;color:var(--muted);font-family:'Inter',sans-serif;font-size:.83rem;cursor:pointer;transition:all .2s}
+.btn-quiz-retry:hover{color:var(--text);border-color:var(--accent)}
+
+/* NOTES */
+.notes-section{background:rgba(22,22,31,.75);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.notes-section .sec-head{border-left:3px solid var(--muted);background:rgba(19,19,26,.8)}
+.notes-section .sec-icon{background:rgba(119,119,170,.12);color:var(--muted)}
+.notes-area{width:100%;background:rgba(19,19,26,.6);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;color:var(--text);font-family:'Inter',sans-serif;font-size:.87rem;min-height:120px;resize:vertical;line-height:1.7;outline:none;transition:border .2s}
+.notes-area:focus{border-color:rgba(119,119,170,.4)}
+.notes-saved-label{font-size:.72rem;color:var(--muted);margin-top:6px;text-align:right;transition:color .3s;min-height:16px}
+.notes-saved-label.ok{color:var(--green)}
+
+/* POMODORO */
+.pom-widget{position:fixed;bottom:28px;left:28px;z-index:300;background:rgba(18,18,26,.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45);display:none;flex-direction:column;gap:10px;min-width:185px}
+.pom-widget.visible{display:flex}
+.pom-header{display:flex;align-items:center;justify-content:space-between}
+.pom-label{font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.pom-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;transition:color .2s;padding:0}
+.pom-close:hover{color:var(--text)}
+.pom-time{font-family:'Sora',sans-serif;font-size:2.2rem;font-weight:800;text-align:center;letter-spacing:.04em;line-height:1}
+.pom-time.work{color:var(--accent2)}
+.pom-time.brk{color:var(--green)}
+.pom-mode-label{font-size:.72rem;color:var(--muted);text-align:center}
+.pom-btns{display:flex;gap:8px;justify-content:center}
+.pom-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:6px 14px;color:var(--text);font-size:.77rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.pom-btn:hover{background:rgba(255,255,255,.12)}
+.pom-btn.primary{background:rgba(124,111,255,.2);border-color:rgba(124,111,255,.4);color:var(--accent2)}
+.pom-btn.primary:hover{background:rgba(124,111,255,.35)}
+.pom-cycles-label{font-size:.7rem;color:var(--muted);text-align:center}
+
+/* Print CSS – serré et propre */
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  nav,.input-card,.loading-state,.skeleton-cards,.err-box,.btn-new,
+  .fc-section,.quiz-section,.histo-section,.notes-section,
+  .pom-widget,.memo-actions,.btn-copy,.btn-sm{display:none !important}
+  body{background:#fff !important;color:#111 !important;font-size:10pt;margin:0}
+  .wrap{padding:6px 10px !important;max-width:100% !important;gap:6px !important}
+  .memo{display:flex !important;flex-direction:column !important;gap:6px !important}
+  .memo.on > *{animation:none !important;opacity:1 !important;transform:none !important}
+  .memo-top{background:linear-gradient(135deg,#ede9fe,#f5f3ff) !important;border-color:#c4b5fd !important;padding:10px 14px !important;break-inside:avoid;backdrop-filter:none !important;border-radius:8px !important}
+  .memo-top h2{-webkit-text-fill-color:#4c1d95 !important;color:#4c1d95 !important;font-size:1.15rem !important;margin-bottom:3px}
+  .memo-top .sub{gap:6px;font-size:.72rem}
+  .pill{background:#f3f4f6 !important;border-color:#e5e7eb !important;color:#555 !important;padding:2px 7px;font-size:.68rem}
+  .sec{border:1px solid #e5e7eb !important;break-inside:avoid;margin-bottom:5px;box-shadow:none !important;backdrop-filter:none !important;background:#fff !important;border-radius:7px !important}
+  .sec-head{background:#f9fafb !important;color:#111 !important;padding:7px 12px !important;border-bottom:1px solid #e5e7eb !important;font-size:.82rem}
+  .sec-icon{background:#ede9fe !important;width:22px !important;height:22px !important;font-size:11px !important;border-radius:5px !important}
+  .sec-body{padding:10px 14px !important}
+  .resume-text p{color:#333 !important;font-size:8.5pt !important;line-height:1.65;margin-bottom:5px !important}
+  .concepts-grid{grid-template-columns:repeat(3,1fr) !important;gap:5px !important}
+  .cc{background:#f9fafb !important;border:1px solid #e5e7eb !important;padding:7px 9px !important;border-radius:7px !important}
+  .cc-title{font-size:.74rem !important;color:#6d28d9 !important;margin-bottom:4px}
+  .cc-body{font-size:8pt !important;color:#444 !important}
+  .info-grid{grid-template-columns:repeat(3,1fr) !important;gap:5px !important}
+  .info-card{padding:7px 9px !important;border-radius:7px !important}
+  .info-card-icon{font-size:1rem !important;margin-bottom:3px}
+  .info-card-title{font-size:.74rem !important}
+  .info-card-body{font-size:8pt !important;color:#444 !important}
+  .info-card.purple{background:#f5f3ff !important;border-color:#c4b5fd !important}
+  .info-card.yellow{background:#fefce8 !important;border-color:#fde68a !important}
+  .info-card.green{background:#f0fdf4 !important;border-color:#86efac !important}
+  .info-card.blue{background:#eff6ff !important;border-color:#93c5fd !important}
+  .info-card.red{background:#fff1f2 !important;border-color:#fca5a5 !important}
+  .plan-row{padding:5px 0 !important}
+  .plan-n{width:20px;height:20px;border-radius:5px;font-size:.65rem}
+  .plan-t{font-size:8.5pt !important;color:#111 !important}
+  .plan-s{font-size:8pt !important;color:#555 !important;margin-top:2px}
+  .tip{padding:7px 9px !important;margin-bottom:4px !important;background:#f0fdf4 !important;border-color:#86efac !important;border-radius:7px !important}
+  .tip span,.tip-i{color:#333 !important;font-size:8.5pt !important}
+  .erreur-item{background:#fff1f2 !important;border-color:#fca5a5 !important;padding:7px 9px !important;margin-bottom:4px;border-radius:7px}
+  .erreur-item span{color:#333 !important;font-size:8.5pt !important}
+  .exam-item{background:#fefce8 !important;border-color:#fde68a !important;padding:7px 9px !important;margin-bottom:4px;border-radius:7px}
+  .exam-item span{color:#333 !important;font-size:8.5pt !important}
+  .exam-n{color:#92400e !important}
+  .erreurs-list,.exam-list{gap:4px !important}
+  .s-resume .sec-head{border-left:3px solid #7c6fff !important}
+  .s-concepts .sec-head{border-left:3px solid #fbbf24 !important}
+  .s-plan .sec-head{border-left:3px solid #22d3a5 !important}
+  .s-memo .sec-head{border-left:3px solid #60a5fa !important}
+  .s-tips .sec-head{border-left:3px solid #c084fc !important}
+  .s-erreurs .sec-head{border-left:3px solid #f87171 !important}
+  .s-exam .sec-head{border-left:3px solid #fbbf24 !important}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">📚</div>
+  <h1>Fiche Mémo IA</h1>
+  <div class="nav-right">
+    <button class="btn-pom-nav" onclick="togglePomodoro()">⏱ Pomodoro</button>
+    <div class="badge">Modèle : <b>Claude Opus 4.6</b></div>
+  </div>
+</nav>
+
+<!-- Pomodoro flottant -->
+<div class="pom-widget" id="pom-widget">
+  <div class="pom-header">
+    <span class="pom-label">⏱ Pomodoro</span>
+    <button class="pom-close" onclick="togglePomodoro()">✕</button>
+  </div>
+  <div class="pom-time work" id="pom-time">25:00</div>
+  <div class="pom-mode-label" id="pom-mode-label">Travail</div>
+  <div class="pom-btns">
+    <button class="pom-btn primary" id="pom-start-btn" onclick="pomToggle()">▶ Démarrer</button>
+    <button class="pom-btn" onclick="pomReset()">↺</button>
+  </div>
+  <div class="pom-cycles-label" id="pom-cycles-label">Cycles : 0</div>
+</div>
+
+<div class="wrap">
+
+  <!-- HISTORIQUE -->
+  <div class="histo-section" id="histo-section" style="display:none">
+    <div class="histo-head" onclick="toggleHistorique()">
+      <div class="histo-head-left"><div class="histo-icon">🕘</div>Fiches récentes</div>
+      <span class="histo-toggle" id="histo-toggle">▼</span>
+    </div>
+    <div class="histo-body" id="histo-body">
+      <div class="histo-list" id="histo-list"></div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-card">
+    <div class="card-title">Ton cours</div>
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab('text',this)">📝 Texte</button>
+      <button class="tab" onclick="switchTab('pdf',this)">📄 PDF</button>
+    </div>
+    <div id="tp-text" class="tab-pane on">
+      <label>Colle tes notes de cours ici</label>
+      <textarea id="texte" placeholder="Colle ton cours ici… (polycopié, notes de TD, slides recopiés…)" oninput="updateCounter()"></textarea>
+      <div class="char-counter" id="char-counter">0 / 14 000 caractères</div>
+    </div>
+    <div id="tp-pdf" class="tab-pane">
+      <div class="drop" id="drop">
+        <div class="di">📂</div>
+        <strong>Glisse ton PDF ici</strong><br/>
+        <span style="font-size:.8rem;margin-top:6px;display:block">ou clique pour choisir un fichier</span>
+        <input type="file" accept=".pdf" onchange="loadPDF(this.files[0])"/>
+      </div>
+      <div class="file-ok" id="file-ok"></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Matière</label>
+        <input type="text" id="matiere" placeholder="Ex: Biologie cellulaire, Droit des contrats…"/>
+      </div>
+      <div>
+        <label>Niveau</label>
+        <select id="niveau">
+          <option>Lycée</option><option>BTS / BUT</option>
+          <option selected>Licence 1</option><option>Licence 2</option>
+          <option>Licence 3</option><option>Master 1</option><option>Master 2</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-go" id="btn" onclick="generer()">✨ Générer ma fiche mémo</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" id="loading">
+    <div class="spin"></div>
+    <div class="gen-progress-wrap"><div class="gen-bar" id="gen-bar"></div></div>
+    <div class="gen-step" id="gen-step">Initialisation…</div>
+    <p><strong>Claude analyse ton cours…</strong><br/>Génération complète de ta fiche mémo.<br/>30 à 50 secondes environ.</p>
+  </div>
+
+  <!-- ERROR -->
+  <div class="err-box" id="err">
+    <h3>❌ Erreur</h3>
+    <p id="err-msg">Une erreur s'est produite.</p>
+    <code id="err-detail"></code>
+  </div>
+
+  <!-- MEMO -->
+  <div class="memo" id="memo">
+
+    <div class="memo-top">
+      <div>
+        <h2 id="memo-titre">Fiche de révision</h2>
+        <div class="sub">
+          <span class="pill" id="memo-mat"></span>
+          <span class="pill" id="memo-niv"></span>
+          <span style="font-size:.74rem">Générée par Claude Opus 4.6</span>
+        </div>
+      </div>
+      <div class="memo-actions">
+        <button class="btn-sm" onclick="ouvrirFlashcards()">🃏 Flashcards</button>
+        <button class="btn-sm" onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">❓ Quiz</button>
+        <button class="btn-sm" onclick="window.print()">🖨️ Imprimer / PDF</button>
+      </div>
+    </div>
+
+    <!-- Résumé -->
+    <div class="sec s-resume">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">📋</div>Résumé du cours</div>
+        <button class="btn-copy" onclick="copierSection('s-resume',this)">📋 Copier</button>
+      </div>
+      <div class="sec-body"><div class="resume-text" id="s-resume"></div></div>
+    </div>
+
+    <!-- Notions clés -->
+    <div class="sec s-concepts">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">🔑</div>Notions et définitions clés</div>
+      </div>
+      <div class="sec-body"><div class="concepts-grid" id="s-concepts"></div></div>
+    </div>
+
+    <!-- Plan -->
+    <div class="sec s-plan">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">🗺️</div>Plan structuré</div>
+      </div>
+      <div class="sec-body" id="s-plan"></div>
+    </div>
+
+    <!-- Mémo rapide -->
+    <div class="sec s-memo">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">⚡</div>Mémo — À retenir absolument</div>
+      </div>
+      <div class="sec-body"><div class="info-grid" id="s-memo"></div></div>
+    </div>
+
+    <!-- Erreurs classiques -->
+    <div class="sec s-erreurs">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">⚠️</div>Erreurs classiques à éviter</div>
+      </div>
+      <div class="sec-body"><div class="erreurs-list" id="s-erreurs"></div></div>
+    </div>
+
+    <!-- Questions d'examen -->
+    <div class="sec s-exam">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">🎓</div>Questions probables à l'examen</div>
+      </div>
+      <div class="sec-body"><div class="exam-list" id="s-exam"></div></div>
+    </div>
+
+    <!-- Conseils -->
+    <div class="sec s-tips">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">💡</div>Conseils de mémorisation</div>
+      </div>
+      <div class="sec-body" id="s-tips"></div>
+    </div>
+
+    <!-- Flashcards -->
+    <div class="fc-section" id="fc-section" style="display:none">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">🃏</div>Flashcards — Entraîne-toi</div>
+        <div class="fc-filter">
+          <button class="fc-filter-btn on" onclick="setFcFilter('all',this)">Toutes</button>
+          <button class="fc-filter-btn" onclick="setFcFilter('review',this)">À revoir</button>
+        </div>
+      </div>
+      <div class="fc-body">
+        <div class="fc-stats-row">
+          <span class="fc-stat known" id="fc-known-count">✓ 0 sus</span>
+          <span class="fc-stat review" id="fc-review-count">↺ 0 à revoir</span>
+          <span class="fc-stat total" id="fc-total-count">0 total</span>
+        </div>
+        <div class="fc-bar-wrap"><div class="fc-bar" id="fc-bar"></div></div>
+        <div class="fc-progress" id="fc-progress">Carte 0 / 0</div>
+        <div class="fc-wrap" onclick="retournerCarte()">
+          <div class="fc-inner" id="fc-inner">
+            <div class="fc-face fc-front"><div class="fc-text" id="fc-front-text"></div></div>
+            <div class="fc-face fc-back"><div class="fc-text" id="fc-back-text"></div></div>
+          </div>
+        </div>
+        <div class="fc-hint">👆 Clique pour voir la définition</div>
+        <div class="fc-keys">← → pour naviguer · Espace pour retourner · J = Je sais · N = À revoir</div>
+        <div class="fc-nav">
+          <button class="fc-btn dontknow" onclick="marquerCarte(false)">✗ À revoir</button>
+          <button class="fc-btn" id="fc-prev" onclick="carteNav(-1)">←</button>
+          <button class="fc-btn" id="fc-next" onclick="carteNav(1)">→</button>
+          <button class="fc-btn know" onclick="marquerCarte(true)">✓ Je sais</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div class="quiz-section" id="quiz-section">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">❓</div>Quiz — Teste tes connaissances</div>
+      </div>
+      <div class="quiz-body">
+        <div class="quiz-start" id="quiz-start">
+          <div class="quiz-config">
+            <label>Nombre de questions :</label>
+            <select class="quiz-count-sel" id="quiz-count-sel">
+              <option value="10">10 questions</option>
+              <option value="15" selected>15 questions</option>
+              <option value="20">20 questions</option>
+            </select>
+          </div>
+          <p id="quiz-start-desc">Questions générées par l'IA couvrant l'intégralité du cours</p>
+          <button class="btn-quiz-start" id="btn-quiz-start" onclick="genererQuiz()">🎯 Lancer le quiz</button>
+        </div>
+        <div class="quiz-loading" id="quiz-loading">
+          <div class="spin"></div>
+          <p>Génération des questions…</p>
+        </div>
+        <div class="quiz-q" id="quiz-q">
+          <div class="quiz-prog-row">
+            <div class="quiz-prog" id="quiz-prog"></div>
+          </div>
+          <div class="quiz-prog-bar-wrap"><div class="quiz-prog-bar" id="quiz-prog-bar"></div></div>
+          <div class="quiz-question" id="quiz-question"></div>
+          <div class="quiz-choices" id="quiz-choices"></div>
+          <div class="quiz-explication" id="quiz-explication"></div>
+          <button class="btn-quiz-next" id="btn-quiz-next" onclick="quizSuivant()">Question suivante →</button>
+        </div>
+        <div class="quiz-score" id="quiz-score">
+          <div class="score-ring-wrap">
+            <div class="score-ring" id="score-ring">
+              <div class="score-ring-inner">
+                <div class="score-ring-num" id="score-ring-num">0/0</div>
+                <div class="score-ring-label">score</div>
+              </div>
+            </div>
+          </div>
+          <div class="quiz-score-msg" id="quiz-score-msg"></div>
+          <div class="quiz-score-detail" id="quiz-score-detail"></div>
+          <div class="quiz-score-actions">
+            <button class="btn-quiz-retry" onclick="relancerQuiz()">🔄 Recommencer</button>
+            <button class="btn-quiz-retry" onclick="genererQuiz()">🎲 Nouvelles questions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes personnelles -->
+    <div class="notes-section">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">📝</div>Mes notes personnelles</div>
+      </div>
+      <div class="sec-body">
+        <textarea class="notes-area" id="notes-area" placeholder="Ajoute tes propres remarques, questions, ou points à revoir…" oninput="sauvegarderNotes()"></textarea>
+        <div class="notes-saved-label" id="notes-saved-label"></div>
+      </div>
+    </div>
+
+  </div><!-- /memo -->
+</div><!-- /wrap -->
+
+<button class="btn-new" id="btn-new" onclick="nouvelleFiche()">✨ Nouvelle fiche</button>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const GROQ_KEY  = "gsk_" + "NLebVEtVakPkDSRSsqXjWGdyb3FYZ6MxaFvSremhYp0R4WLRzKQ5";
+const GROQ_URL  = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL= "llama-3.3-70b-versatile";
+
+async function callAI(prompt) {
+  const resp = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GROQ_KEY}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: "Tu es un tuteur expert en méthodes d'apprentissage. Tu génères des fiches de révision claires et structurées." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 4096,
+      temperature: 0.4,
+    }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+  return { text: data.choices[0].message.content };
+}
+
+let pdfText = "";
+let rawJSON  = "";
+
+// XSS : échappe tout contenu de l'API avant injection HTML
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str || '');
+  return d.innerHTML;
+}
+
+// ── Tabs ────────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
+  document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("on"));
+  btn.classList.add("on");
+  document.getElementById("tp-" + name).classList.add("on");
+}
+
+// ── Compteur ────────────────────────────────────────────────────────────────
+function updateCounter() {
+  const len = document.getElementById("texte").value.length;
+  const el  = document.getElementById("char-counter");
+  el.textContent = `${len.toLocaleString()} / 14 000 caractères`;
+  el.className = "char-counter" + (len > 14000 ? " danger" : len > 11000 ? " warn" : "");
+}
+
+// ── Nouvelle fiche ──────────────────────────────────────────────────────────
+function nouvelleFiche() {
+  document.getElementById("memo").classList.remove("on");
+  document.getElementById("btn-new").classList.remove("visible");
+  document.getElementById("texte").value = "";
+  document.getElementById("matiere").value = "";
+  pdfText = ""; rawJSON = "";
+  updateCounter();
+  document.getElementById("file-ok").style.display = "none";
+  document.getElementById("notes-area").value = "";
+  document.getElementById("notes-saved-label").textContent = "";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ── PDF ──────────────────────────────────────────────────────────────────────
+async function loadPDF(file) {
+  if (!file) return;
+  const info = document.getElementById("file-ok");
+  info.style.display = "block";
+  info.textContent = "⏳ Lecture du PDF en cours…";
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page    = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(x => x.str).join(" ") + "\n";
+    }
+    pdfText = text.trim();
+    if (pdfText.length < pdf.numPages * 50) {
+      info.style.cssText = "display:block;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);border-radius:8px;padding:10px 14px;font-size:.82rem;margin-top:12px";
+      info.textContent = `⚠️ Ce PDF semble être un scan (image). L'IA ne peut pas lire les images — utilise un PDF avec du texte sélectionnable, ou colle ton cours dans l'onglet Texte.`;
+    } else {
+      info.style.cssText = "";
+      info.textContent = `✅ ${file.name} — ${pdf.numPages} page(s) | ${pdfText.length.toLocaleString()} caractères`;
+    }
+  } catch(e) {
+    info.textContent = "❌ Erreur : " + e.message;
+  }
+}
+
+// ── Drag & Drop ──────────────────────────────────────────────────────────────
+const dz = document.getElementById("drop");
+dz.addEventListener("dragover",  e => { e.preventDefault(); dz.classList.add("drag"); });
+dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+dz.addEventListener("drop", e => {
+  e.preventDefault(); dz.classList.remove("drag");
+  if (e.dataTransfer.files[0]) loadPDF(e.dataTransfer.files[0]);
+});
+
+// ── Progress bar simulation ─────────────────────────────────────────────────
+let progressTimer = null;
+const GEN_STEPS = [
+  [10, "Lecture du cours…"],
+  [28, "Extraction des notions clés…"],
+  [48, "Structuration du plan…"],
+  [66, "Rédaction du résumé…"],
+  [80, "Préparation des conseils et erreurs…"],
+  [92, "Finalisation de la fiche…"],
+];
+
+function startProgress() {
+  const bar  = document.getElementById("gen-bar");
+  const step = document.getElementById("gen-step");
+  let i = 0;
+  bar.style.width = "5%";
+  step.textContent = GEN_STEPS[0][1];
+  progressTimer = setInterval(() => {
+    i++;
+    if (i < GEN_STEPS.length) {
+      bar.style.width = GEN_STEPS[i][0] + "%";
+      step.textContent = GEN_STEPS[i][1];
+    }
+  }, 6000);
+}
+
+function stopProgress() {
+  clearInterval(progressTimer);
+  document.getElementById("gen-bar").style.width = "100%";
+  document.getElementById("gen-step").textContent = "Fiche prête !";
+}
+
+// ── Générer ─────────────────────────────────────────────────────────────────
+async function generer() {
+  const isPDF  = document.querySelector(".tab.on").textContent.includes("PDF");
+  const texte  = isPDF ? pdfText : document.getElementById("texte").value.trim();
+  if (!texte || texte.length < 80) { alert("⚠️ Colle un cours plus long (minimum 80 caractères)."); return; }
+
+  const matiere = document.getElementById("matiere").value;
+  const niveau  = document.getElementById("niveau").value;
+
+  document.getElementById("btn").disabled = true;
+  document.getElementById("loading").classList.add("on");
+  document.getElementById("memo").classList.remove("on");
+  document.getElementById("err").classList.remove("on");
+  document.getElementById("btn-new").classList.remove("visible");
+  document.getElementById("gen-bar").style.width = "5%";
+  startProgress();
+
+  const prompt = `Analyse ce cours et génère une fiche de révision complète en JSON.
+Matière : ${matiere || "non précisée"}
+Niveau : ${niveau}
+
+Cours :
+---
+${texte.slice(0, 14000)}
+---
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans \`\`\`) :
+{
+  "titre": "Titre court et précis de la fiche",
+  "resume": ["paragraphe 1 développé", "paragraphe 2 développé", "paragraphe 3 développé"],
+  "notions": [
+    {"titre": "Nom de la notion", "definition": "Définition claire et concise"},
+    ...entre 8 et 14 notions couvrant l'intégralité du cours...
+  ],
+  "plan": [
+    {"num": 1, "titre": "Grande partie", "sous": ["sous-partie A", "sous-partie B"]},
+    ...toutes les parties du cours...
+  ],
+  "memo_cles": [
+    {"icone": "🧬", "titre": "Point essentiel 1", "contenu": "Ce qu'il faut absolument retenir", "couleur": "purple"},
+    {"icone": "⚗️", "titre": "Point essentiel 2", "contenu": "Ce qu'il faut absolument retenir", "couleur": "yellow"},
+    {"icone": "📌", "titre": "Point essentiel 3", "contenu": "Ce qu'il faut absolument retenir", "couleur": "green"},
+    {"icone": "🔬", "titre": "Point essentiel 4", "contenu": "Ce qu'il faut absolument retenir", "couleur": "blue"},
+    {"icone": "💡", "titre": "Point essentiel 5", "contenu": "Ce qu'il faut absolument retenir", "couleur": "red"}
+  ],
+  "erreurs": [
+    "Erreur classique ou confusion fréquente que font les étudiants sur ce sujet",
+    "Autre erreur typique à éviter à l'examen",
+    "Piège ou mauvaise interprétation courante",
+    "Confusion fréquente entre deux notions du cours",
+    "Point souvent oublié ou mal compris"
+  ],
+  "questions_exam": [
+    "Question ouverte probable posée par un professeur à l'examen ?",
+    "Autre question typique de ce chapitre ?",
+    "Question de réflexion ou d'application ?",
+    "Question de définition ou d'explication ?",
+    "Question de comparaison ou d'analyse ?"
+  ],
+  "conseils": ["Conseil mémorisation 1", "Conseil mémorisation 2", "Conseil mémorisation 3"]
+}
+Les couleurs disponibles pour memo_cles sont : purple, yellow, green, blue, red. Couvre TOUTES les parties du cours.`;
+
+  try {
+    const data = await callAI(prompt);
+
+    const raw = data.text.trim()
+                    .replace(/^```json\s*/i,"")
+                    .replace(/^```\s*/,"")
+                    .replace(/\s*```$/,"");
+    rawJSON = raw;
+
+    let json;
+    try { json = JSON.parse(raw); }
+    catch(e) { throw new Error("Format JSON invalide. Réessaie."); }
+
+    stopProgress();
+    setTimeout(() => {
+      afficherMemo(json, matiere, niveau);
+      sauvegarderHistorique(json, matiere, niveau);
+      document.getElementById("btn-new").classList.add("visible");
+    }, 400);
+
+  } catch(e) {
+    stopProgress();
+    document.getElementById("err").classList.add("on");
+    document.getElementById("err-msg").textContent =
+      "Impossible de contacter l'IA. Vérifie ta connexion Internet.";
+    document.getElementById("err-detail").textContent = e.message;
+  }
+
+  document.getElementById("loading").classList.remove("on");
+  document.getElementById("btn").disabled = false;
+}
+
+// ── Afficher ─────────────────────────────────────────────────────────────────
+function afficherMemo(d, matiere, niveau) {
+  document.getElementById("memo-titre").textContent = d.titre || "Fiche de révision";
+  document.getElementById("memo-mat").textContent   = matiere || "Cours";
+  document.getElementById("memo-niv").textContent   = niveau;
+
+  // Résumé
+  document.getElementById("s-resume").innerHTML =
+    (d.resume || []).map(p => `<p>${esc(p)}</p>`).join("");
+
+  // Notions
+  document.getElementById("s-concepts").innerHTML =
+    (d.notions || []).map(n =>
+      `<div class="cc">
+        <div class="cc-title">${esc(n.titre)}</div>
+        <div class="cc-body">${esc(n.definition)}</div>
+      </div>`
+    ).join("");
+
+  // Plan
+  document.getElementById("s-plan").innerHTML =
+    (d.plan || []).map(item =>
+      `<div class="plan-row">
+        <div class="plan-n">${esc(String(item.num))}</div>
+        <div>
+          <div class="plan-t">${esc(item.titre)}</div>
+          ${item.sous?.length ? `<div class="plan-s">${item.sous.map(s => `• ${esc(s)}`).join("  ")}</div>` : ""}
+        </div>
+      </div>`
+    ).join("");
+
+  // Mémo clés
+  document.getElementById("s-memo").innerHTML =
+    (d.memo_cles || []).map(c =>
+      `<div class="info-card ${esc(c.couleur || 'purple')}">
+        <div class="info-card-icon">${esc(c.icone || "📌")}</div>
+        <div class="info-card-title">${esc(c.titre)}</div>
+        <div class="info-card-body">${esc(c.contenu)}</div>
+      </div>`
+    ).join("");
+
+  // Erreurs
+  document.getElementById("s-erreurs").innerHTML =
+    (d.erreurs || []).map(e =>
+      `<div class="erreur-item">
+        <span class="erreur-i">⚠️</span>
+        <span>${esc(e)}</span>
+      </div>`
+    ).join("");
+
+  // Questions exam
+  document.getElementById("s-exam").innerHTML =
+    (d.questions_exam || []).map((q, i) =>
+      `<div class="exam-item">
+        <span class="exam-n">Q${i + 1}</span>
+        <span>${esc(q)}</span>
+      </div>`
+    ).join("");
+
+  // Conseils
+  const icons = ["🧠","✍️","🔄","🎯","📖","⏰"];
+  document.getElementById("s-tips").innerHTML =
+    (d.conseils || []).map((c, i) =>
+      `<div class="tip"><span class="tip-i">${icons[i % icons.length]}</span><span>${esc(c)}</span></div>`
+    ).join("");
+
+  // Flashcards
+  fcNotions = d.notions || [];
+  fcKnown.clear();
+  fcFilter = 'all';
+  document.querySelectorAll(".fc-filter-btn").forEach((b,i) => b.classList.toggle("on", i===0));
+  fcIndex = 0;
+  document.getElementById("fc-section").style.display = fcNotions.length ? "block" : "none";
+  if (fcNotions.length) { afficherCarte(); updateFcStats(); }
+
+  // Notes
+  const savedNotes = localStorage.getItem("notes_" + (d.titre || ""));
+  document.getElementById("notes-area").value = savedNotes || "";
+  currentNoteKey = d.titre || "";
+
+  // Quiz
+  currentMemoJSON = d;
+  document.getElementById("quiz-start").style.display   = "block";
+  document.getElementById("quiz-loading").style.display = "none";
+  document.getElementById("quiz-q").style.display       = "none";
+  document.getElementById("quiz-score").style.display   = "none";
+  document.getElementById("btn-quiz-start").disabled    = false;
+
+  document.getElementById("memo").classList.remove("on");
+  void document.getElementById("memo").offsetWidth; // force reflow pour re-déclencher animations
+  document.getElementById("memo").classList.add("on");
+  document.getElementById("memo").scrollIntoView({ behavior: "smooth" });
+}
+
+// ── Copier section ───────────────────────────────────────────────────────────
+function copierSection(id, btn) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    btn.textContent = "✓ Copié !";
+    btn.classList.add("ok");
+    setTimeout(() => { btn.textContent = "📋 Copier"; btn.classList.remove("ok"); }, 2000);
+  });
+}
+
+// ── Historique ───────────────────────────────────────────────────────────────
+function sauvegarderHistorique(json, matiere, niveau) {
+  const liste = JSON.parse(localStorage.getItem("fiches") || "[]");
+  liste.unshift({ id: Date.now(), titre: json.titre || "Fiche sans titre", matiere: matiere || "—", niveau, date: new Date().toLocaleDateString("fr-FR"), json });
+  localStorage.setItem("fiches", JSON.stringify(liste.slice(0, 12)));
+  afficherHistorique();
+}
+
+function afficherHistorique() {
+  const liste = JSON.parse(localStorage.getItem("fiches") || "[]");
+  const section = document.getElementById("histo-section");
+  const el = document.getElementById("histo-list");
+  if (!liste.length) { section.style.display = "none"; return; }
+  section.style.display = "block";
+  el.innerHTML = liste.map((f, i) =>
+    `<div class="histo-card" onclick="restaurerFiche(${i})">
+      <div class="histo-titre">${esc(f.titre)}</div>
+      <div class="histo-meta">${esc(f.matiere)} · ${esc(f.niveau)} · ${esc(f.date)}</div>
+    </div>`
+  ).join("");
+}
+
+function restaurerFiche(index) {
+  const liste = JSON.parse(localStorage.getItem("fiches") || "[]");
+  const f = liste[index];
+  if (!f) return;
+  document.getElementById("matiere").value = f.matiere === "—" ? "" : f.matiere;
+  document.getElementById("niveau").value = f.niveau;
+  afficherMemo(f.json, f.matiere, f.niveau);
+  document.getElementById("btn-new").classList.add("visible");
+}
+
+function toggleHistorique() {
+  const body   = document.getElementById("histo-body");
+  const toggle = document.getElementById("histo-toggle");
+  body.classList.toggle("open");
+  toggle.classList.toggle("open");
+}
+
+// ── Notes ────────────────────────────────────────────────────────────────────
+let currentNoteKey = "";
+let notesTimer = null;
+function sauvegarderNotes() {
+  clearTimeout(notesTimer);
+  const lbl = document.getElementById("notes-saved-label");
+  lbl.textContent = "…";
+  lbl.className = "notes-saved-label";
+  notesTimer = setTimeout(() => {
+    localStorage.setItem("notes_" + currentNoteKey, document.getElementById("notes-area").value);
+    lbl.textContent = "✓ Sauvegardé";
+    lbl.className = "notes-saved-label ok";
+    setTimeout(() => { lbl.textContent = ""; lbl.className = "notes-saved-label"; }, 2000);
+  }, 800);
+}
+
+// ── Flashcards ────────────────────────────────────────────────────────────────
+let fcNotions  = [];
+let fcIndex    = 0;
+let fcKnown    = new Set();
+let fcFilter   = 'all';
+let fcFiltered = [];
+
+function buildFiltered() {
+  if (fcFilter === 'all') {
+    fcFiltered = fcNotions.map((_, i) => i);
+  } else {
+    fcFiltered = fcNotions.map((_, i) => i).filter(i => !fcKnown.has(i));
+  }
+}
+
+function setFcFilter(f, btn) {
+  fcFilter = f;
+  document.querySelectorAll(".fc-filter-btn").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  buildFiltered();
+  if (!fcFiltered.length && f === 'review') {
+    document.getElementById("fc-front-text").textContent = "🎉 Tu connais toutes les notions !";
+    document.getElementById("fc-back-text").textContent  = "";
+    document.getElementById("fc-inner").classList.remove("flipped");
+    document.getElementById("fc-progress").textContent = "Parfait !";
+    return;
+  }
+  fcIndex = 0;
+  afficherCarte();
+}
+
+function ouvrirFlashcards() {
+  const s = document.getElementById("fc-section");
+  s.style.display = "block";
+  s.scrollIntoView({ behavior: "smooth" });
+  buildFiltered();
+  afficherCarte();
+}
+
+function afficherCarte() {
+  buildFiltered();
+  if (!fcFiltered.length) return;
+  const realIdx = fcFiltered[Math.min(fcIndex, fcFiltered.length - 1)];
+  const n = fcNotions[realIdx];
+  document.getElementById("fc-front-text").textContent = n.titre;
+  document.getElementById("fc-back-text").textContent  = n.definition;
+  document.getElementById("fc-inner").classList.remove("flipped");
+  const pos = Math.min(fcIndex, fcFiltered.length - 1) + 1;
+  document.getElementById("fc-progress").textContent = `Carte ${pos} / ${fcFiltered.length}`;
+  document.getElementById("fc-prev").disabled = fcIndex === 0;
+  document.getElementById("fc-next").disabled = fcIndex >= fcFiltered.length - 1;
+  updateFcStats();
+}
+
+function retournerCarte() {
+  document.getElementById("fc-inner").classList.toggle("flipped");
+}
+
+function carteNav(dir) {
+  buildFiltered();
+  fcIndex = Math.max(0, Math.min(fcFiltered.length - 1, fcIndex + dir));
+  afficherCarte();
+}
+
+function marquerCarte(known) {
+  buildFiltered();
+  const realIdx = fcFiltered[Math.min(fcIndex, fcFiltered.length - 1)];
+  if (known) { fcKnown.add(realIdx); } else { fcKnown.delete(realIdx); }
+  updateFcStats();
+  // Avancer automatiquement
+  buildFiltered();
+  if (fcIndex >= fcFiltered.length) fcIndex = Math.max(0, fcFiltered.length - 1);
+  afficherCarte();
+}
+
+function updateFcStats() {
+  const total   = fcNotions.length;
+  const known   = fcKnown.size;
+  const review  = total - known;
+  const pct     = total ? Math.round(known / total * 100) : 0;
+  document.getElementById("fc-known-count").textContent  = `✓ ${known} sus`;
+  document.getElementById("fc-review-count").textContent = `↺ ${review} à revoir`;
+  document.getElementById("fc-total-count").textContent  = `${total} total`;
+  document.getElementById("fc-bar").style.width = pct + "%";
+}
+
+// Raccourcis clavier flashcards
+document.addEventListener("keydown", e => {
+  const fc = document.getElementById("fc-section");
+  if (!fc || fc.style.display === "none") return;
+  if (document.activeElement.tagName === "TEXTAREA" || document.activeElement.tagName === "INPUT") return;
+  if (e.key === "ArrowLeft")  carteNav(-1);
+  if (e.key === "ArrowRight") carteNav(1);
+  if (e.key === " ") { e.preventDefault(); retournerCarte(); }
+  if (e.key === "j" || e.key === "J") marquerCarte(true);
+  if (e.key === "n" || e.key === "N") marquerCarte(false);
+});
+
+// ── Quiz ──────────────────────────────────────────────────────────────────────
+let quizQuestions = [];
+let quizIndex     = 0;
+let quizScore     = 0;
+let currentMemoJSON = null;
+
+async function genererQuiz() {
+  if (!currentMemoJSON) return;
+  const quizCount = parseInt(document.getElementById("quiz-count-sel").value) || 15;
+
+  document.getElementById("quiz-start").style.display   = "none";
+  document.getElementById("quiz-loading").style.display = "block";
+  document.getElementById("quiz-q").style.display       = "none";
+  document.getElementById("quiz-score").style.display   = "none";
+
+  const notions = (currentMemoJSON.notions || []).map(n => `- ${n.titre} : ${n.definition}`).join("\n");
+  const resume  = (currentMemoJSON.resume  || []).join(" ");
+  const plan    = (currentMemoJSON.plan    || []).map(p => p.titre).join(", ");
+
+  const prompt = `Tu es un professeur expert qui génère un quiz complet. Voici un cours.
+
+Plan du cours : ${plan}
+Résumé : ${resume.slice(0, 2500)}
+Notions clés :
+${notions}
+
+Génère exactement ${quizCount} questions QCM variées qui couvrent TOUTES les parties du cours (pas seulement le début). Varie les types : définitions, applications, comparaisons, mécanismes.
+Réponds UNIQUEMENT avec ce JSON (sans texte avant/après, sans \`\`\`) :
+[
+  {
+    "question": "Question claire et précise ?",
+    "choix": ["Réponse A", "Réponse B", "Réponse C", "Réponse D"],
+    "bonne": 0,
+    "explication": "Explication concise de la bonne réponse"
+  }
+]
+"bonne" est l'index 0-3 de la bonne réponse. Mélange bien la position des bonnes réponses.`;
+
+  try {
+    const data = await callAI(prompt);
+
+    const raw = data.text.trim()
+                    .replace(/^```json\s*/i,"")
+                    .replace(/^```\s*/,"")
+                    .replace(/\s*```$/,"");
+    quizQuestions = JSON.parse(raw);
+    quizIndex = 0;
+    quizScore = 0;
+    document.getElementById("quiz-loading").style.display = "none";
+    afficherQuestion();
+  } catch(e) {
+    document.getElementById("quiz-loading").style.display = "none";
+    document.getElementById("quiz-start").style.display   = "block";
+    document.getElementById("btn-quiz-start").textContent = "⚠️ Erreur — Réessayer";
+    document.getElementById("btn-quiz-start").disabled    = false;
+  }
+}
+
+function afficherQuestion() {
+  const q = quizQuestions[quizIndex];
+  document.getElementById("quiz-q").style.display = "block";
+  const pct = Math.round(quizIndex / quizQuestions.length * 100);
+  document.getElementById("quiz-prog").textContent = `Question ${quizIndex + 1} / ${quizQuestions.length}`;
+  document.getElementById("quiz-prog-bar").style.width = pct + "%";
+  document.getElementById("quiz-question").textContent = q.question;
+  document.getElementById("quiz-explication").style.display = "none";
+  document.getElementById("btn-quiz-next").style.display    = "none";
+  document.getElementById("quiz-choices").innerHTML = q.choix.map((c, i) =>
+    `<button class="quiz-choice" onclick="repondre(${i})">${esc(c)}</button>`
+  ).join("");
+}
+
+function repondre(index) {
+  const q = quizQuestions[quizIndex];
+  document.querySelectorAll(".quiz-choice").forEach(b => b.disabled = true);
+  const btns = document.querySelectorAll(".quiz-choice");
+  btns[index].classList.add(index === q.bonne ? "correct" : "wrong");
+  if (index !== q.bonne) btns[q.bonne].classList.add("correct");
+  if (index === q.bonne) quizScore++;
+  const expl = document.getElementById("quiz-explication");
+  expl.textContent = q.explication;
+  expl.style.display = "block";
+  const btnNext = document.getElementById("btn-quiz-next");
+  btnNext.style.display = "block";
+  btnNext.textContent = quizIndex < quizQuestions.length - 1 ? "Question suivante →" : "Voir mon score";
+}
+
+function quizSuivant() {
+  quizIndex++;
+  if (quizIndex < quizQuestions.length) {
+    afficherQuestion();
+  } else {
+    document.getElementById("quiz-q").style.display    = "none";
+    document.getElementById("quiz-score").style.display = "block";
+    const pct = Math.round(quizScore / quizQuestions.length * 100);
+    const deg = Math.round(pct / 100 * 360);
+    // Animation du ring
+    const ring = document.getElementById("score-ring");
+    ring.style.background = `conic-gradient(var(--${pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red'}) ${deg}deg, var(--bg3) ${deg}deg)`;
+    document.getElementById("score-ring-num").textContent = `${quizScore}/${quizQuestions.length}`;
+    const msgs = [
+      ["Continue à réviser ! 💪", "Reprends le cours et réessaie."],
+      ["Pas mal, continue ! 📖", "Quelques notions à retravailler."],
+      ["Bien joué ! 🎯", "Tu maîtrises bien le sujet."],
+      ["Excellent ! 🏆", "Tu es prêt(e) pour l'examen !"],
+    ];
+    const m = pct < 40 ? msgs[0] : pct < 60 ? msgs[1] : pct < 85 ? msgs[2] : msgs[3];
+    document.getElementById("quiz-score-msg").textContent    = m[0];
+    document.getElementById("quiz-score-detail").textContent = m[1] + ` (${pct}% de bonnes réponses)`;
+  }
+}
+
+function relancerQuiz() {
+  quizIndex = 0;
+  quizScore = 0;
+  document.getElementById("quiz-score").style.display = "none";
+  afficherQuestion();
+}
+
+// ── Pomodoro ──────────────────────────────────────────────────────────────────
+let pomTimer   = null;
+let pomRunning = false;
+let pomSeconds = 25 * 60;
+let pomMode    = 'work';
+let pomCycles  = 0;
+
+function togglePomodoro() {
+  const w = document.getElementById("pom-widget");
+  w.classList.toggle("visible");
+}
+
+function pomToggle() {
+  if (pomRunning) {
+    clearInterval(pomTimer);
+    pomRunning = false;
+    document.getElementById("pom-start-btn").textContent = "▶ Reprendre";
+  } else {
+    pomRunning = true;
+    document.getElementById("pom-start-btn").textContent = "⏸ Pause";
+    pomTimer = setInterval(pomTick, 1000);
+  }
+}
+
+function pomReset() {
+  clearInterval(pomTimer);
+  pomRunning = false;
+  pomMode = 'work';
+  pomSeconds = 25 * 60;
+  document.getElementById("pom-start-btn").textContent = "▶ Démarrer";
+  updatePomDisplay();
+}
+
+function pomTick() {
+  pomSeconds--;
+  if (pomSeconds <= 0) {
+    clearInterval(pomTimer);
+    pomRunning = false;
+    if (pomMode === 'work') {
+      pomCycles++;
+      pomMode = 'brk';
+      pomSeconds = 5 * 60;
+      document.getElementById("pom-mode-label").textContent = "Pause 🌿";
+      document.getElementById("pom-start-btn").textContent = "▶ Démarrer pause";
+      try { new Audio("data:audio/wav;base64,").play(); } catch(e) {}
+      document.title = "☕ Pause ! — Fiche Mémo IA";
+    } else {
+      pomMode = 'work';
+      pomSeconds = 25 * 60;
+      document.getElementById("pom-mode-label").textContent = "Travail";
+      document.getElementById("pom-start-btn").textContent = "▶ Démarrer";
+      document.title = "📚 Fiche Mémo IA";
+    }
+    document.getElementById("pom-cycles-label").textContent = `Cycles : ${pomCycles}`;
+  }
+  updatePomDisplay();
+}
+
+function updatePomDisplay() {
+  const m = String(Math.floor(pomSeconds / 60)).padStart(2, '0');
+  const s = String(pomSeconds % 60).padStart(2, '0');
+  const el = document.getElementById("pom-time");
+  el.textContent = `${m}:${s}`;
+  el.className   = `pom-time ${pomMode}`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+afficherHistorique();
+</script>
+</body>
+</html>
