@@ -1080,17 +1080,46 @@ function stopProgress() {
 
 // ── Utilitaire : parse JSON robuste ─────────────────────────────────────────
 function parseJSON(raw) {
-  const cleaned = raw.trim()
-    .replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "")
-    .replace(/[\u0000-\u001F\u007F]/g, m => m === '\n' || m === '\r' || m === '\t' ? m : '');
-  try { return JSON.parse(cleaned); }
+  let s = raw.trim()
+    .replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
+
+  // Extraire uniquement le bloc JSON {…}
+  const start = s.indexOf('{');
+  const end   = s.lastIndexOf('}');
+  if (start !== -1 && end > start) s = s.slice(start, end + 1);
+
+  // Passe 1 : supprimer les séquences d'échappement invalides
+  // JSON valide : \" \\ \/ \b \f \n \r \t \uXXXX — tout le reste est illégal
+  s = s.replace(/\\([^"\\\/bfnrtu])/g, (_, ch) => ch);
+
+  try { return JSON.parse(s); }
   catch(_) {
-    // tentative de récupération : extraire le JSON entre la première { et la dernière }
-    const start = cleaned.indexOf('{');
-    const end   = cleaned.lastIndexOf('}');
-    if (start !== -1 && end !== -1) return JSON.parse(cleaned.slice(start, end + 1));
-    throw new Error("Réponse JSON invalide. Réessaie.");
+    // Passe 2 : corriger les retours à la ligne/tabulations littéraux dans les chaînes
+    s = repairControlChars(s);
+    try { return JSON.parse(s); }
+    catch(e) { throw new Error(`Format JSON invalide : ${e.message.slice(0, 80)}. Réessaie.`); }
   }
+}
+
+// Remplace les caractères de contrôle littéraux à l'intérieur des chaînes JSON
+function repairControlChars(s) {
+  let out = '', inStr = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (!inStr) {
+      out += c;
+      if (c === '"') inStr = true;
+    } else {
+      if (c === '\\') { out += c + (s[++i] || ''); }
+      else if (c === '"') { out += c; inStr = false; }
+      else if (c === '\n') { out += '\\n'; }
+      else if (c === '\r') { out += '\\r'; }
+      else if (c === '\t') { out += '\\t'; }
+      else if (c.charCodeAt(0) < 0x20) { /* skip other control chars */ }
+      else { out += c; }
+    }
+  }
+  return out;
 }
 
 // ── Compresser le texte ───────────────────────────────────────────────────────
