@@ -433,7 +433,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
   <h1>Fiche Mémo IA</h1>
   <div class="nav-right">
     <button class="btn-pom-nav" onclick="togglePomodoro()">⏱ Pomodoro</button>
-    <div class="badge">Modèle : <b>Llama 3.1 8B</b></div>
+    <div class="badge">Modèle : <b>Llama 3.3 70B</b></div>
   </div>
 </nav>
 
@@ -533,7 +533,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
         <div class="sub">
           <span class="pill" id="memo-mat"></span>
           <span class="pill" id="memo-niv"></span>
-          <span style="font-size:.74rem">Générée par Llama 3.1 8B</span></span>
+          <span style="font-size:.74rem">Générée par Llama 3.3 70B</span>
         </div>
       </div>
       <div class="memo-actions">
@@ -707,7 +707,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 // ── Config ──────────────────────────────────────────────────────────────────
 const GROQ_KEY        = "gsk_" + "NLebVEtVakPkDSRSsqXjWGdyb3FYZ6MxaFvSremhYp0R4WLRzKQ5";
 const GROQ_URL        = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL      = "llama-3.1-8b-instant";
+const GROQ_MODEL      = "llama-3.3-70b-versatile";
 const GROQ_VISION_MDL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 async function callAI(prompt) {
@@ -723,7 +723,7 @@ async function callAI(prompt) {
         { role: "system", content: "Tu es un tuteur expert en méthodes d'apprentissage. Tu génères des fiches de révision claires et structurées." },
         { role: "user", content: prompt },
       ],
-      max_tokens: 8000,
+      max_tokens: 5000,
       temperature: 0.4,
     }),
   });
@@ -999,79 +999,24 @@ async function generer() {
   document.getElementById("gen-bar").style.width = "5%";
   startProgress();
 
-  const prompt = `Tu es un professeur expert et un pédagogue hors pair. Analyse ce cours en profondeur et génère une fiche de révision très complète et détaillée en JSON.
-Matière : ${matiere || "non précisée"}
-Niveau : ${niveau}
+  // Compression : supprime espaces/lignes inutiles pour économiser des tokens
+  const texteCompresse = texte
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
+    .slice(0, 20000);
 
-Cours (peut provenir de plusieurs fichiers) :
+  const nbPages = Math.round(texteCompresse.length / 3000);
+  const prompt = `Génère une fiche de révision JSON complète pour ce cours.
+Matière:${matiere||"?"} Niveau:${niveau} (~${nbPages} pages)
+COURS:
 ---
-${texte.slice(0, 24000)}
+${texteCompresse}
 ---
-
-CONSIGNES IMPORTANTES :
-- Lis INTÉGRALEMENT tout le contenu fourni avant de générer quoi que ce soit
-- Si le cours contient des tableaux ou formules, retranscris-les fidèlement dans les notions et le mémo clés
-- Le résumé doit être DÉTAILLÉ : 4 à 6 paragraphes substantiels (5-8 lignes chacun), couvrant TOUTES les parties et sous-parties
-- Les définitions des notions doivent être complètes (2-4 phrases), avec chiffres/exemples tirés du cours si présents
-- Le mémo clés doit contenir 6 à 8 points avec des explications approfondies incluant les formules ou données chiffrées du cours
-- Couvre ABSOLUMENT toutes les pages/sections, sans rien omettre, même les dernières pages
-- Les erreurs et questions d'examen doivent être très spécifiques au contenu fourni
-- Génère au moins 6 conseils de mémorisation adaptés à la matière
-
-Réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans \`\`\`) :
-{
-  "titre": "Titre précis et complet de la fiche",
-  "resume": [
-    "Paragraphe 1 : introduction et contexte général du cours, les grandes idées directrices (5-8 lignes détaillées)",
-    "Paragraphe 2 : développement des concepts principaux avec leurs liens logiques (5-8 lignes)",
-    "Paragraphe 3 : approfondissement des notions techniques ou théoriques (5-8 lignes)",
-    "Paragraphe 4 : applications, exemples concrets, implications pratiques (5-8 lignes)",
-    "Paragraphe 5 : synthèse et points de vigilance pour les examens (4-6 lignes)"
-  ],
-  "notions": [
-    {"titre": "Nom de la notion", "definition": "Définition complète et précise en 2-3 phrases. Inclut les caractéristiques principales et un exemple si utile."},
-    ...entre 12 et 18 notions couvrant TOUTE la matière...
-  ],
-  "plan": [
-    {"num": 1, "titre": "Titre exact de la partie 1 tel qu'il apparaît dans le document", "sous": ["Titre exact de la sous-partie I", "Titre exact de la sous-partie II", "Titre exact de la sous-partie III si applicable"]},
-    {"num": 2, "titre": "Titre exact de la partie 2", "sous": ["Sous-partie A", "Sous-partie B"]},
-    ...reproduis FIDÈLEMENT la structure et les titres du document original, sans renommer ni regrouper...
-  ],
-  "memo_cles": [
-    {"icone": "🧬", "titre": "Point essentiel 1", "contenu": "Explication approfondie de ce qu'il faut absolument retenir, avec le pourquoi et comment (3-5 lignes)", "couleur": "purple"},
-    {"icone": "⚗️", "titre": "Point essentiel 2", "contenu": "Explication détaillée avec exemples ou formules clés", "couleur": "yellow"},
-    {"icone": "📌", "titre": "Point essentiel 3", "contenu": "Ce qu'il faut retenir, les pièges à éviter liés à ce point", "couleur": "green"},
-    {"icone": "🔬", "titre": "Point essentiel 4", "contenu": "Explication avec lien vers les autres notions du cours", "couleur": "blue"},
-    {"icone": "💡", "titre": "Point essentiel 5", "contenu": "Application pratique ou implication concrète à retenir", "couleur": "red"},
-    {"icone": "🎯", "titre": "Point essentiel 6", "contenu": "Point souvent mal compris, explication clarifiée", "couleur": "purple"},
-    {"icone": "📊", "titre": "Point essentiel 7", "contenu": "Chiffres, formules, ou repères quantitatifs importants", "couleur": "yellow"}
-  ],
-  "erreurs": [
-    "Confusion très fréquente entre [notion A] et [notion B] : explication de la différence exacte",
-    "Erreur de raisonnement classique : décrire précisément l'erreur et comment l'éviter",
-    "Piège d'examen typique dans cette matière : ce que les correcteurs pénalisent",
-    "Mauvaise interprétation courante d'une notion clé du cours",
-    "Point souvent oublié en situation d'examen et qui coûte des points",
-    "Erreur de méthode fréquente dans les exercices ou rédactions sur ce sujet"
-  ],
-  "questions_exam": [
-    "Question de définition : [question précise liée au contenu du cours] ?",
-    "Question d'explication : [question nécessitant une réponse développée sur un concept clé] ?",
-    "Question d'application : [cas pratique ou mise en situation liée au cours] ?",
-    "Question de comparaison : [comparer deux notions du cours] ?",
-    "Question d'analyse : [question nécessitant une réflexion critique sur le sujet] ?",
-    "Question de synthèse : [question englobant plusieurs parties du cours] ?"
-  ],
-  "conseils": [
-    "Conseil de mémorisation 1 adapté à cette matière spécifique",
-    "Conseil de mémorisation 2 (technique d'ancrage, association)",
-    "Conseil de révision 3 (timing, répétition espacée)",
-    "Conseil pour les exercices pratiques ou applications",
-    "Conseil pour l'organisation de la révision de ce chapitre",
-    "Conseil pour éviter les pièges à l'examen dans cette matière"
-  ]
-}
-Les couleurs disponibles pour memo_cles sont : purple, yellow, green, blue, red. Sois exhaustif et très détaillé.`;
+Réponds UNIQUEMENT avec un JSON valide (sans \`\`\`):
+{"titre":"...","resume":["para1 détaillé","para2","para3","para4"],"notions":[{"titre":"...","definition":"2-3 phrases avec exemples/chiffres du cours"}],"plan":[{"num":1,"titre":"titre exact du doc","sous":["sous-partie exacte"]}],"memo_cles":[{"icone":"📌","titre":"...","contenu":"explication avec données chiffrées si présentes","couleur":"purple"}],"erreurs":["erreur spécifique 1","erreur 2","erreur 3","erreur 4","erreur 5"],"questions_exam":["Q1?","Q2?","Q3?","Q4?","Q5?"],"conseils":["conseil1","conseil2","conseil3","conseil4"]}
+Règles: 4 paragraphes résumé détaillés, 10-14 notions, titres du plan IDENTIQUES au document, 5-7 memo_cles avec chiffres/formules du cours, couleurs: purple/yellow/green/blue/red. Couvre TOUTES les parties.`;
 
   try {
     const data = await callAI(prompt);
