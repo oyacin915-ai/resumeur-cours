@@ -1103,6 +1103,19 @@ function compresser(txt, maxChars) {
     .slice(0, maxChars);
 }
 
+// ── Pause TPM : attend N ms en affichant un compte à rebours ─────────────────
+function attendreTPM(ms) {
+  return new Promise(resolve => {
+    let restant = Math.ceil(ms / 1000);
+    setProgress(48, `Pause quota — reprise dans ${restant}s…`);
+    const tick = setInterval(() => {
+      restant--;
+      if (restant <= 0) { clearInterval(tick); resolve(); }
+      else setProgress(48, `Pause quota — reprise dans ${restant}s…`);
+    }, 1000);
+  });
+}
+
 // ── Générer (2 passes) ───────────────────────────────────────────────────────
 async function generer() {
   const isFichiers = document.querySelector(".tab.on").textContent.includes("Fichiers");
@@ -1141,15 +1154,18 @@ JSON UNIQUEMENT (sans \`\`\`):
 {"parties":[{"n":1,"t":"titre EXACT","s":["ss-titre EXACT"]}],"termes":["terme1","terme2"],"chiffres":["formule ou stat clé"],"contexte":"2 phrases résumant le sujet principal"}
 Règles: toutes les parties/sous-parties avec titres EXACTS du document, max 20 termes importants, max 12 chiffres/formules/stats clés.`;
 
-    const dataP1  = await callAI(promptP1, 1400);
+    const dataP1  = await callAI(promptP1, 1200);
     const structureRaw = dataP1.text.trim()
       .replace(/^```json\s*/i,"").replace(/^```\s*/,"").replace(/\s*```$/,"");
     let structure;
     try { structure = JSON.parse(structureRaw); }
     catch(_) { structure = { parties:[], termes:[], chiffres:[], contexte: texteP1.slice(0,300) }; }
 
+    // ── Pause pour ne pas dépasser le quota TPM/minute ─────────────────────
+    await attendreTPM(16000);
+
     // ── PASSE 2 : Génération fiche complète ────────────────────────────────
-    startProgressSim(45, 95, "Passe 2/2 — Rédaction de la fiche…", 18000);
+    startProgressSim(55, 95, "Passe 2/2 — Rédaction de la fiche…", 18000);
 
     const extrait = compresser(texte, 4000); // extrait pour contexte narratif
     const promptP2 = `Tu es un professeur expert BTS/BUT. Génère une fiche de révision complète en JSON.
