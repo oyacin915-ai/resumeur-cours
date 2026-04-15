@@ -433,7 +433,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
   <h1>Fiche Mémo IA</h1>
   <div class="nav-right">
     <button class="btn-pom-nav" onclick="togglePomodoro()">⏱ Pomodoro</button>
-    <div class="badge">Modèle : <b>Claude Opus 4.6</b></div>
+    <div class="badge">Modèle : <b>Llama 3.1 8B</b></div>
   </div>
 </nav>
 
@@ -533,7 +533,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
         <div class="sub">
           <span class="pill" id="memo-mat"></span>
           <span class="pill" id="memo-niv"></span>
-          <span style="font-size:.74rem">Générée par Claude Opus 4.6</span>
+          <span style="font-size:.74rem">Générée par Llama 3.1 8B</span></span>
         </div>
       </div>
       <div class="memo-actions">
@@ -707,7 +707,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 // ── Config ──────────────────────────────────────────────────────────────────
 const GROQ_KEY        = "gsk_" + "NLebVEtVakPkDSRSsqXjWGdyb3FYZ6MxaFvSremhYp0R4WLRzKQ5";
 const GROQ_URL        = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL      = "llama-3.3-70b-versatile";
+const GROQ_MODEL      = "llama-3.1-8b-instant";
 const GROQ_VISION_MDL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 async function callAI(prompt) {
@@ -723,7 +723,7 @@ async function callAI(prompt) {
         { role: "system", content: "Tu es un tuteur expert en méthodes d'apprentissage. Tu génères des fiches de révision claires et structurées." },
         { role: "user", content: prompt },
       ],
-      max_tokens: 32768,
+      max_tokens: 8000,
       temperature: 0.4,
     }),
   });
@@ -1005,7 +1005,7 @@ Niveau : ${niveau}
 
 Cours (peut provenir de plusieurs fichiers) :
 ---
-${texte.slice(0, 50000)}
+${texte.slice(0, 24000)}
 ---
 
 CONSIGNES IMPORTANTES :
