@@ -220,6 +220,65 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 .s-exam .sec-head{border-left:3px solid var(--yellow)}
 .s-exam .sec-icon{background:rgba(251,191,36,.12);color:var(--yellow)}
 
+/* ── Chiffre phare ─────────────────────────────────────────────────────── */
+.chiffre-phare-box{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.28);border-left:4px solid var(--yellow);border-radius:10px;padding:14px 20px;display:flex;align-items:flex-start;gap:12px}
+.cp-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px}
+.cp-text{font-size:.92rem;color:#e0dcc8;line-height:1.7}
+.cp-text b,.cp-text strong{color:var(--yellow);font-weight:700}
+
+/* ── Formules ───────────────────────────────────────────────────────────── */
+.formules-list{display:flex;flex-direction:column;gap:12px}
+.formule-box{background:rgba(34,211,165,.07);border:1px solid rgba(34,211,165,.25);border-radius:12px;padding:16px 22px;text-align:center;transition:all .2s}
+.formule-box:hover{border-color:rgba(34,211,165,.45);box-shadow:0 4px 20px rgba(34,211,165,.1)}
+.formule-label{font-size:.72rem;color:var(--green);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px}
+.formule-expr{font-family:'Sora',sans-serif;font-size:.95rem;color:var(--text);font-weight:600;line-height:1.65}
+.formule-expr b{color:var(--green)}
+
+/* ── Tableaux ───────────────────────────────────────────────────────────── */
+.tables-list{display:flex;flex-direction:column;gap:22px}
+.table-titre-label{font-size:.8rem;color:var(--accent2);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.table-titre-label::before{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%}
+.memo-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,.07)}
+.memo-table{width:100%;border-collapse:collapse;font-size:.83rem;min-width:400px}
+.memo-table th{background:rgba(124,111,255,.13);color:var(--accent2);padding:10px 14px;text-align:left;font-weight:600;border-bottom:1px solid rgba(124,111,255,.22);white-space:nowrap;font-family:'Sora',sans-serif;font-size:.8rem}
+.memo-table td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:#cccce0;vertical-align:top;line-height:1.6}
+.memo-table tr:last-child td{border-bottom:none}
+.memo-table tr:hover td{background:rgba(255,255,255,.025)}
+
+/* ── Résumé amélioré ────────────────────────────────────────────────────── */
+.resume-para{color:#cccce0;line-height:1.88;margin-bottom:14px;font-size:.91rem;padding-left:14px;border-left:2px solid rgba(124,111,255,.22);transition:border-color .2s}
+.resume-para:hover{border-left-color:var(--accent)}
+.resume-para:last-child{margin-bottom:0}
+.resume-para b,.resume-para strong{color:var(--accent2)}
+
+/* ── Plan document-style ────────────────────────────────────────────────── */
+.plan-fiche-head{background:linear-gradient(135deg,rgba(124,111,255,.14),rgba(167,139,250,.06));border:1px solid rgba(124,111,255,.25);border-radius:10px;padding:11px 16px;margin-bottom:12px;font-family:'Sora',sans-serif;font-size:.86rem;font-weight:700;color:var(--accent2);display:flex;align-items:center;gap:10px}
+.plan-fiche-n{background:var(--accent);color:#fff;border-radius:6px;padding:2px 9px;font-size:.72rem;flex-shrink:0}
+.plan-fiche{margin-bottom:18px}
+
+/* ── Erreurs améliorées ─────────────────────────────────────────────────── */
+.erreur-item{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:13px 16px;font-size:.85rem;color:#cccce0;line-height:1.7;display:flex;gap:10px;align-items:flex-start;transition:all .2s}
+.erreur-item:hover{border-color:rgba(248,113,113,.45);transform:translateX(4px);background:rgba(248,113,113,.09)}
+.erreur-i{color:var(--red);flex-shrink:0;font-size:1.1rem}
+
+/* ── Questions exam expandables ─────────────────────────────────────────── */
+.exam-item{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:12px 15px;font-size:.85rem;color:#cccce0;line-height:1.65;display:flex;flex-direction:column;gap:0;transition:all .2s}
+.exam-item.expandable{cursor:pointer}
+.exam-item:hover,.exam-item.expandable:hover{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.09)}
+.exam-head-row{display:flex;align-items:flex-start;gap:10px}
+.exam-toggle{margin-left:auto;color:var(--muted);font-size:.72rem;transition:transform .25s;flex-shrink:0;padding-top:2px}
+.exam-item.open .exam-toggle{transform:rotate(180deg)}
+.exam-reponse{font-size:.82rem;color:#9999bb;margin-top:10px;padding:10px 14px;background:rgba(251,191,36,.06);border-radius:7px;border-left:3px solid rgba(251,191,36,.35);line-height:1.68;display:none}
+.exam-item.open .exam-reponse{display:block}
+
+/* ── Section accents nouveaux ───────────────────────────────────────────── */
+.s-chiffre .sec-head{border-left:3px solid var(--yellow)}
+.s-chiffre .sec-icon{background:rgba(251,191,36,.12);color:var(--yellow)}
+.s-formules .sec-head{border-left:3px solid var(--green)}
+.s-formules .sec-icon{background:rgba(34,211,165,.12);color:var(--green)}
+.s-tableaux .sec-head{border-left:3px solid var(--blue)}
+.s-tableaux .sec-icon{background:rgba(96,165,250,.12);color:var(--blue)}
+
 /* Compteur */
 .char-counter{font-size:.75rem;color:var(--muted);text-align:right;margin-top:5px;transition:color .2s}
 .char-counter.warn{color:var(--yellow)}
@@ -544,13 +603,29 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
       </div>
     </div>
 
+    <!-- Chiffre phare -->
+    <div class="sec s-chiffre" id="sec-chiffre" style="display:none">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">💡</div>Chiffre clé à retenir</div>
+      </div>
+      <div class="sec-body"><div id="s-chiffre"></div></div>
+    </div>
+
     <!-- Résumé -->
     <div class="sec s-resume">
       <div class="sec-head">
         <div class="sec-head-left"><div class="sec-icon">📋</div>Résumé du cours</div>
         <button class="btn-copy" onclick="copierSection('s-resume',this)">📋 Copier</button>
       </div>
-      <div class="sec-body"><div class="resume-text" id="s-resume"></div></div>
+      <div class="sec-body"><div id="s-resume"></div></div>
+    </div>
+
+    <!-- Plan -->
+    <div class="sec s-plan">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">🗺️</div>Plan structuré</div>
+      </div>
+      <div class="sec-body" id="s-plan"></div>
     </div>
 
     <!-- Notions clés -->
@@ -561,12 +636,20 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
       <div class="sec-body"><div class="concepts-grid" id="s-concepts"></div></div>
     </div>
 
-    <!-- Plan -->
-    <div class="sec s-plan">
+    <!-- Formules -->
+    <div class="sec s-formules" id="sec-formules" style="display:none">
       <div class="sec-head">
-        <div class="sec-head-left"><div class="sec-icon">🗺️</div>Plan structuré</div>
+        <div class="sec-head-left"><div class="sec-icon">📐</div>Formules & Calculs clés</div>
       </div>
-      <div class="sec-body" id="s-plan"></div>
+      <div class="sec-body"><div class="formules-list" id="s-formules"></div></div>
+    </div>
+
+    <!-- Tableaux -->
+    <div class="sec s-tableaux" id="sec-tableaux" style="display:none">
+      <div class="sec-head">
+        <div class="sec-head-left"><div class="sec-icon">📊</div>Tableaux de synthèse</div>
+      </div>
+      <div class="sec-body"><div class="tables-list" id="s-tableaux"></div></div>
     </div>
 
     <!-- Mémo rapide -->
@@ -865,28 +948,50 @@ async function extrairePDF(file, idx) {
   return text;
 }
 
-// ── OCR PDF scanné (rend les pages en canvas puis envoie à vision) ────────────
+// ── OCR PDF scanné — batch de 3 pages par appel vision ───────────────────────
 async function ocrPDFScanne(pdf, idx) {
+  const BATCH = 3;
   let fullText = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    updateFileStatus(idx, "loading", `OCR page ${i} / ${pdf.numPages}…`);
+  for (let start = 1; start <= pdf.numPages; start += BATCH) {
+    const end = Math.min(start + BATCH - 1, pdf.numPages);
+    updateFileStatus(idx, "loading", `OCR pages ${start}–${end} / ${pdf.numPages}…`);
     try {
-      const page     = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.0 }); // scale 1.0 = moins de tokens image
-      const canvas   = document.createElement("canvas");
-      canvas.width   = viewport.width;
-      canvas.height  = viewport.height;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-      const b64 = canvas.toDataURL("image/jpeg", 0.80).split(",")[1];
-      const t   = await callVision(b64, "image/jpeg");
-      fullText += `\n--- Page ${i} ---\n${t}`;
+      const images = [];
+      for (let i = start; i <= end; i++) {
+        const page     = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 0.9 });
+        const canvas   = document.createElement("canvas");
+        canvas.width   = viewport.width;
+        canvas.height  = viewport.height;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        images.push({ b64: canvas.toDataURL("image/jpeg", 0.75).split(",")[1], num: i });
+      }
+      const t = await callVisionBatch(images);
+      fullText += "\n" + t;
     } catch(e) {
-      fullText += `\n--- Page ${i} : erreur OCR (${e.message}) ---\n`;
+      fullText += `\n[Pages ${start}-${end} illisibles : ${e.message}]`;
     }
   }
   const result = fullText.trim();
-  if (!result || result.length < 100) throw new Error("OCR échoué — essaie de coller le texte manuellement dans l'onglet Texte.");
+  if (!result || result.length < 100)
+    throw new Error("OCR échoué — ce PDF semble protégé ou vide. Colle le texte dans l'onglet Texte.");
   return result;
+}
+
+// ── Vision batch : plusieurs images en 1 appel ────────────────────────────────
+async function callVisionBatch(images) {
+  const content = images.flatMap(({b64, num}) => [
+    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${b64}` } },
+  ]);
+  content.push({ type: "text", text: `Transcris intégralement tout le texte de ces pages de cours (pages ${images.map(x=>x.num).join(', ')}). Commence chaque page par "--- Page N ---". Inclus titres, définitions, formules, tableaux complets, chiffres. Texte brut structuré, sans commentaires.` });
+  const resp = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
+    body: JSON.stringify({ model: GROQ_VISION_MDL, messages:[{role:"user",content}], max_tokens:2500, temperature:0.1 }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+  return data.choices[0].message.content;
 }
 
 // ── Image → texte (vision LLM) ───────────────────────────────────────────────
@@ -1047,32 +1152,42 @@ Règles: toutes les parties/sous-parties avec titres EXACTS du document, max 20 
     startProgressSim(45, 95, "Passe 2/2 — Rédaction de la fiche…", 18000);
 
     const extrait = compresser(texte, 4000); // extrait pour contexte narratif
-    const promptP2 = `Tu es un professeur expert. Génère une fiche de révision complète et détaillée en JSON.
-Matière: ${matiere||"non précisée"} | Niveau: ${niveau}
-STRUCTURE DU COURS: ${JSON.stringify(structure)}
-EXTRAIT (contexte): ${extrait}
+    const promptP2 = `Tu es un professeur expert BTS/BUT. Génère une fiche de révision complète en JSON.
+Matière:${matiere||"non précisée"} | Niveau:${niveau}
+STRUCTURE DU COURS:${JSON.stringify(structure)}
+EXTRAIT:${extrait}
 
 JSON UNIQUEMENT (sans \`\`\`):
 {
-  "titre": "titre précis de la fiche",
-  "resume": [
-    "§1 Introduction : contexte, enjeux, définition générale du sujet (5-7 lignes)",
-    "§2 Concepts centraux : développement des notions principales avec leur logique (5-7 lignes)",
-    "§3 Mécanismes et outils : comment ça fonctionne, avec chiffres et exemples (5-7 lignes)",
-    "§4 Synthèse et points d'examen : liens entre les parties, pièges à connaître (4-5 lignes)"
+  "titre":"Chapitre X — Titre exact du cours",
+  "chiffre_phare":"Le chiffre ou stat LE plus marquant du cours, mis en valeur avec **gras** autour du chiffre",
+  "resume":[
+    "§1 — **Contexte et enjeux** : introduction approfondie (6-8 lignes, met les chiffres clés en **gras**)",
+    "§2 — **Concepts principaux** : développe chaque notion centrale avec ses implications (6-8 lignes)",
+    "§3 — **Mécanismes et outils** : comment ils fonctionnent, étapes, exemples chiffrés (6-8 lignes)",
+    "§4 — **Synthèse** : liens entre les parties, ce qu'il faut retenir pour l'examen (4-6 lignes)"
   ],
-  "notions": [
-    {"titre": "terme exact du cours", "definition": "définition complète 2-3 phrases avec exemple concret ou chiffre tiré du cours"}
-  ],
-  "plan": [copie exacte de structure.parties avec {"num":n,"titre":"titre exact","sous":["ss-titre exact"]}],
-  "memo_cles": [
-    {"icone":"📌","titre":"point clé","contenu":"explication approfondie 3-4 lignes, inclus chiffres/formules si présents","couleur":"purple"}
-  ],
-  "erreurs": ["erreur précise et fréquente liée au cours"],
-  "questions_exam": ["question probable à l'examen ?"],
-  "conseils": ["conseil de mémorisation adapté à cette matière"]
+  "plan":[{"num":1,"titre":"Titre EXACT fiche/partie","sous":["sous-titre EXACT","sous-titre EXACT"]}],
+  "notions":[{"titre":"terme exact","definition":"Définition complète 2-3 phrases. Met en **gras** les mots-clés. Inclut exemple ou chiffre si dispo."}],
+  "formules":[{"titre":"Nom de la formule","formule":"Expression exacte avec × = + entre les éléments","note":"Ce que mesure cette formule (optionnel)"}],
+  "tableaux":[{"titre":"Nom du tableau","colonnes":["Col1","Col2","Col3"],"lignes":[["val","val","val"],["val","val","val"]]}],
+  "memo_cles":[{"icone":"📌","titre":"Point clé court","contenu":"Explication 3-4 lignes, met les chiffres et formules clés en **gras**","couleur":"purple"}],
+  "erreurs":["**Confusion fréquente** : explication précise de l'erreur et comment l'éviter"],
+  "questions_exam":[{"question":"Question précise liée au cours ?","reponse_courte":"Réponse concise en 2-3 phrases avec les éléments clés"}],
+  "conseils":["Conseil de mémorisation adapté à cette matière spécifique"]
 }
-Règles STRICTES: 4 §résumé détaillés, 12-16 notions avec vraies définitions, plan = titres EXACTS, 6-8 memo_cles avec données chiffrées, 5-6 erreurs spécifiques, 5-6 questions exam, 5 conseils. Couleurs: purple/yellow/green/blue/red.`;
+RÈGLES STRICTES:
+- chiffre_phare: UNE stat frappante du cours avec **chiffre** en gras
+- resume: 4 §, minimum 6 lignes chacun, chiffres en **gras**
+- plan: titres IDENTIQUES au document source (pas de renommage)
+- notions: 12-16 entrées avec définitions complètes
+- formules: toutes les formules/calculs/équations du cours (peut être vide [] si aucune)
+- tableaux: reproduire les tableaux importants du cours (peut être [] si aucun)
+- memo_cles: 6-8 points avec données chiffrées en **gras**
+- questions_exam: 5-6 objets avec question ET reponse_courte
+- erreurs: 5-6 erreurs SPÉCIFIQUES à ce cours
+- conseils: 4-5 conseils concrets
+- Couleurs disponibles: purple, yellow, green, blue, red`;
 
     const dataP2 = await callAI(promptP2, 5500);
     const json   = parseJSON(dataP2.text);
@@ -1098,64 +1213,133 @@ Règles STRICTES: 4 §résumé détaillés, 12-16 notions avec vraies définitio
   document.getElementById("btn").disabled = false;
 }
 
+// ── Utilitaire : convertit **gras** markdown → HTML ───────────────────────
+function mdBold(str) {
+  return esc(str).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
 // ── Afficher ─────────────────────────────────────────────────────────────────
 function afficherMemo(d, matiere, niveau) {
   document.getElementById("memo-titre").textContent = d.titre || "Fiche de révision";
   document.getElementById("memo-mat").textContent   = matiere || "Cours";
   document.getElementById("memo-niv").textContent   = niveau;
 
-  // Résumé
-  document.getElementById("s-resume").innerHTML =
-    (d.resume || []).map(p => `<p>${esc(p)}</p>`).join("");
+  // ── Chiffre phare
+  const cpSec = document.getElementById("sec-chiffre");
+  const cpEl  = document.getElementById("s-chiffre");
+  if (d.chiffre_phare && cpEl) {
+    cpEl.innerHTML = `<div class="chiffre-phare-box">
+      <span class="cp-icon">💡</span>
+      <div class="cp-text">${mdBold(d.chiffre_phare)}</div>
+    </div>`;
+    cpSec.style.display = "";
+  } else if (cpSec) cpSec.style.display = "none";
 
-  // Notions
+  // ── Résumé (avec gras markdown + style para)
+  document.getElementById("s-resume").innerHTML =
+    (d.resume || []).map(p =>
+      `<p class="resume-para">${mdBold(p)}</p>`
+    ).join("");
+
+  // ── Plan document-style
+  document.getElementById("s-plan").innerHTML =
+    (d.plan || []).map(item => {
+      const sousList = (item.sous || []).map(s =>
+        `<div class="plan-row" style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)">
+          <div class="plan-n" style="background:rgba(124,111,255,.3);font-size:.65rem">${esc(String(item.num))}</div>
+          <div class="plan-s" style="font-size:.84rem;color:#cccce0">• ${mdBold(s)}</div>
+        </div>`
+      ).join("");
+      return `<div class="plan-fiche">
+        <div class="plan-fiche-head">
+          <span class="plan-fiche-n">${esc(String(item.num))}</span>
+          ${mdBold(item.titre)}
+        </div>
+        ${sousList}
+      </div>`;
+    }).join("");
+
+  // ── Notions
   document.getElementById("s-concepts").innerHTML =
     (d.notions || []).map(n =>
       `<div class="cc">
         <div class="cc-title">${esc(n.titre)}</div>
-        <div class="cc-body">${esc(n.definition)}</div>
+        <div class="cc-body">${mdBold(n.definition)}</div>
       </div>`
     ).join("");
 
-  // Plan
-  document.getElementById("s-plan").innerHTML =
-    (d.plan || []).map(item =>
-      `<div class="plan-row">
-        <div class="plan-n">${esc(String(item.num))}</div>
-        <div>
-          <div class="plan-t">${esc(item.titre)}</div>
-          ${item.sous?.length ? `<div class="plan-s">${item.sous.map(s => `• ${esc(s)}`).join("  ")}</div>` : ""}
+  // ── Formules
+  const formSec = document.getElementById("sec-formules");
+  if (formSec) {
+    const formules = d.formules || [];
+    document.getElementById("s-formules").innerHTML = formules.map(f =>
+      `<div class="formule-box">
+        <div class="formule-label">📐 ${esc(f.titre)}</div>
+        <div class="formule-expr">${mdBold(f.formule)}</div>
+        ${f.note ? `<div style="font-size:.78rem;color:var(--muted);margin-top:8px">${esc(f.note)}</div>` : ''}
+      </div>`
+    ).join("");
+    formSec.style.display = formules.length ? "" : "none";
+  }
+
+  // ── Tableaux
+  const tabSec = document.getElementById("sec-tableaux");
+  if (tabSec) {
+    const tableaux = d.tableaux || [];
+    document.getElementById("s-tableaux").innerHTML = tableaux.map(t => {
+      const cols = Array.isArray(t.colonnes) ? t.colonnes : [];
+      const rows = Array.isArray(t.lignes)   ? t.lignes   : [];
+      return `<div>
+        ${t.titre ? `<div class="table-titre-label">${esc(t.titre)}</div>` : ''}
+        <div class="memo-table-wrap">
+          <table class="memo-table">
+            ${cols.length ? `<thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>` : ''}
+            <tbody>${rows.map(row =>
+              `<tr>${(Array.isArray(row) ? row : [row]).map(cell =>
+                `<td>${mdBold(String(cell ?? ''))}</td>`
+              ).join('')}</tr>`
+            ).join('')}</tbody>
+          </table>
         </div>
-      </div>`
-    ).join("");
+      </div>`;
+    }).join("");
+    tabSec.style.display = tableaux.length ? "" : "none";
+  }
 
-  // Mémo clés
+  // ── Mémo clés
   document.getElementById("s-memo").innerHTML =
     (d.memo_cles || []).map(c =>
       `<div class="info-card ${esc(c.couleur || 'purple')}">
         <div class="info-card-icon">${esc(c.icone || "📌")}</div>
         <div class="info-card-title">${esc(c.titre)}</div>
-        <div class="info-card-body">${esc(c.contenu)}</div>
+        <div class="info-card-body">${mdBold(c.contenu)}</div>
       </div>`
     ).join("");
 
-  // Erreurs
+  // ── Erreurs
   document.getElementById("s-erreurs").innerHTML =
     (d.erreurs || []).map(e =>
       `<div class="erreur-item">
         <span class="erreur-i">⚠️</span>
-        <span>${esc(e)}</span>
+        <span>${mdBold(e)}</span>
       </div>`
     ).join("");
 
-  // Questions exam
+  // ── Questions exam (expandables si réponse courte dispo)
   document.getElementById("s-exam").innerHTML =
-    (d.questions_exam || []).map((q, i) =>
-      `<div class="exam-item">
-        <span class="exam-n">Q${i + 1}</span>
-        <span>${esc(q)}</span>
-      </div>`
-    ).join("");
+    (d.questions_exam || []).map((q, i) => {
+      const isObj  = typeof q === 'object' && q !== null;
+      const qText  = isObj ? (q.question || '') : q;
+      const rep    = isObj ? (q.reponse_courte || null) : null;
+      return `<div class="exam-item ${rep ? 'expandable' : ''}" ${rep ? 'onclick="this.classList.toggle(\'open\')"' : ''}>
+        <div class="exam-head-row">
+          <span class="exam-n">Q${i+1}</span>
+          <span>${mdBold(qText)}</span>
+          ${rep ? '<span class="exam-toggle">▼</span>' : ''}
+        </div>
+        ${rep ? `<div class="exam-reponse">💡 ${mdBold(rep)}</div>` : ''}
+      </div>`;
+    }).join("");
 
   // Conseils
   const icons = ["🧠","✍️","🔄","🎯","📖","⏰"];
