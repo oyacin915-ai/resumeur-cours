@@ -710,7 +710,7 @@ const GROQ_URL        = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL      = "llama-3.3-70b-versatile";
 const GROQ_VISION_MDL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
-async function callAI(prompt) {
+async function callAI(prompt, maxTokens = 5000) {
   const resp = await fetch(GROQ_URL, {
     method: "POST",
     headers: {
@@ -720,11 +720,11 @@ async function callAI(prompt) {
     body: JSON.stringify({
       model: GROQ_MODEL,
       messages: [
-        { role: "system", content: "Tu es un tuteur expert en méthodes d'apprentissage. Tu génères des fiches de révision claires et structurées." },
+        { role: "system", content: "Tu es un tuteur expert. Réponds uniquement avec du JSON valide, sans texte avant ou après." },
         { role: "user", content: prompt },
       ],
-      max_tokens: 5000,
-      temperature: 0.4,
+      max_tokens: maxTokens,
+      temperature: 0.3,
     }),
   });
   const data = await resp.json();
@@ -870,17 +870,23 @@ async function ocrPDFScanne(pdf, idx) {
   let fullText = "";
   for (let i = 1; i <= pdf.numPages; i++) {
     updateFileStatus(idx, "loading", `OCR page ${i} / ${pdf.numPages}…`);
-    const page     = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: 1.5 });
-    const canvas   = document.createElement("canvas");
-    canvas.width   = viewport.width;
-    canvas.height  = viewport.height;
-    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-    const b64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
-    const t   = await callVision(b64, "image/jpeg");
-    fullText += `\n--- Page ${i} ---\n${t}`;
+    try {
+      const page     = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.0 }); // scale 1.0 = moins de tokens image
+      const canvas   = document.createElement("canvas");
+      canvas.width   = viewport.width;
+      canvas.height  = viewport.height;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      const b64 = canvas.toDataURL("image/jpeg", 0.80).split(",")[1];
+      const t   = await callVision(b64, "image/jpeg");
+      fullText += `\n--- Page ${i} ---\n${t}`;
+    } catch(e) {
+      fullText += `\n--- Page ${i} : erreur OCR (${e.message}) ---\n`;
+    }
   }
-  return fullText.trim();
+  const result = fullText.trim();
+  if (!result || result.length < 100) throw new Error("OCR échoué — essaie de coller le texte manuellement dans l'onglet Texte.");
+  return result;
 }
 
 // ── Image → texte (vision LLM) ───────────────────────────────────────────────
@@ -904,7 +910,7 @@ async function callVision(b64, mime) {
           { type: "text", text: "Transcris intégralement tout le texte visible sur cette image de cours (titres, définitions, formules, schémas annotés, tableaux). Conserve la structure avec des sauts de ligne. Texte brut uniquement, sans commentaires." }
         ]
       }],
-      max_tokens: 4096,
+      max_tokens: 2000,
       temperature: 0.1,
     }),
   });
@@ -941,39 +947,58 @@ dz.addEventListener("drop", e => {
   if (e.dataTransfer.files.length) ajouterFichiers(e.dataTransfer.files);
 });
 
-// ── Progress bar simulation ─────────────────────────────────────────────────
+// ── Progress bar ─────────────────────────────────────────────────────────────
 let progressTimer = null;
-const GEN_STEPS = [
-  [10, "Lecture du cours…"],
-  [28, "Extraction des notions clés…"],
-  [48, "Structuration du plan…"],
-  [66, "Rédaction du résumé…"],
-  [80, "Préparation des conseils et erreurs…"],
-  [92, "Finalisation de la fiche…"],
-];
 
-function startProgress() {
-  const bar  = document.getElementById("gen-bar");
-  const step = document.getElementById("gen-step");
-  let i = 0;
-  bar.style.width = "5%";
-  step.textContent = GEN_STEPS[0][1];
+function setProgress(pct, msg) {
+  document.getElementById("gen-bar").style.width = pct + "%";
+  document.getElementById("gen-step").textContent = msg;
+}
+
+function startProgressSim(from, to, msg, durationMs) {
+  clearInterval(progressTimer);
+  setProgress(from, msg);
+  const steps = 20;
+  const inc   = (to - from) / steps;
+  let   cur   = from;
   progressTimer = setInterval(() => {
-    i++;
-    if (i < GEN_STEPS.length) {
-      bar.style.width = GEN_STEPS[i][0] + "%";
-      step.textContent = GEN_STEPS[i][1];
-    }
-  }, 6000);
+    cur += inc;
+    if (cur >= to) { clearInterval(progressTimer); cur = to; }
+    document.getElementById("gen-bar").style.width = cur + "%";
+  }, durationMs / steps);
 }
 
 function stopProgress() {
   clearInterval(progressTimer);
-  document.getElementById("gen-bar").style.width = "100%";
-  document.getElementById("gen-step").textContent = "Fiche prête !";
+  setProgress(100, "Fiche prête !");
 }
 
-// ── Générer ─────────────────────────────────────────────────────────────────
+// ── Utilitaire : parse JSON robuste ─────────────────────────────────────────
+function parseJSON(raw) {
+  const cleaned = raw.trim()
+    .replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "")
+    .replace(/[\u0000-\u001F\u007F]/g, m => m === '\n' || m === '\r' || m === '\t' ? m : '');
+  try { return JSON.parse(cleaned); }
+  catch(_) {
+    // tentative de récupération : extraire le JSON entre la première { et la dernière }
+    const start = cleaned.indexOf('{');
+    const end   = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1) return JSON.parse(cleaned.slice(start, end + 1));
+    throw new Error("Réponse JSON invalide. Réessaie.");
+  }
+}
+
+// ── Compresser le texte ───────────────────────────────────────────────────────
+function compresser(txt, maxChars) {
+  return txt
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
+    .slice(0, maxChars);
+}
+
+// ── Générer (2 passes) ───────────────────────────────────────────────────────
 async function generer() {
   const isFichiers = document.querySelector(".tab.on").textContent.includes("Fichiers");
   let texte;
@@ -996,40 +1021,62 @@ async function generer() {
   document.getElementById("memo").classList.remove("on");
   document.getElementById("err").classList.remove("on");
   document.getElementById("btn-new").classList.remove("visible");
-  document.getElementById("gen-bar").style.width = "5%";
-  startProgress();
-
-  // Compression : supprime espaces/lignes inutiles pour économiser des tokens
-  const texteCompresse = texte
-    .replace(/[ \t]{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/[ \t]+\n/g, '\n')
-    .trim()
-    .slice(0, 20000);
-
-  const nbPages = Math.round(texteCompresse.length / 3000);
-  const prompt = `Génère une fiche de révision JSON complète pour ce cours.
-Matière:${matiere||"?"} Niveau:${niveau} (~${nbPages} pages)
-COURS:
----
-${texteCompresse}
----
-Réponds UNIQUEMENT avec un JSON valide (sans \`\`\`):
-{"titre":"...","resume":["para1 détaillé","para2","para3","para4"],"notions":[{"titre":"...","definition":"2-3 phrases avec exemples/chiffres du cours"}],"plan":[{"num":1,"titre":"titre exact du doc","sous":["sous-partie exacte"]}],"memo_cles":[{"icone":"📌","titre":"...","contenu":"explication avec données chiffrées si présentes","couleur":"purple"}],"erreurs":["erreur spécifique 1","erreur 2","erreur 3","erreur 4","erreur 5"],"questions_exam":["Q1?","Q2?","Q3?","Q4?","Q5?"],"conseils":["conseil1","conseil2","conseil3","conseil4"]}
-Règles: 4 paragraphes résumé détaillés, 10-14 notions, titres du plan IDENTIQUES au document, 5-7 memo_cles avec chiffres/formules du cours, couleurs: purple/yellow/green/blue/red. Couvre TOUTES les parties.`;
+  document.getElementById("btn-pdf-dl").classList.remove("visible");
 
   try {
-    const data = await callAI(prompt);
+    // ── PASSE 1 : Extraction structure + données clés ──────────────────────
+    startProgressSim(5, 42, "Passe 1/2 — Analyse du cours…", 12000);
 
-    const raw = data.text.trim()
-                    .replace(/^```json\s*/i,"")
-                    .replace(/^```\s*/,"")
-                    .replace(/\s*```$/,"");
-    rawJSON = raw;
+    const texteP1 = compresser(texte, 22000);
+    const promptP1 = `Lis ce cours et extrais sa structure en JSON compact. COURS:
+---
+${texteP1}
+---
+JSON UNIQUEMENT (sans \`\`\`):
+{"parties":[{"n":1,"t":"titre EXACT","s":["ss-titre EXACT"]}],"termes":["terme1","terme2"],"chiffres":["formule ou stat clé"],"contexte":"2 phrases résumant le sujet principal"}
+Règles: toutes les parties/sous-parties avec titres EXACTS du document, max 20 termes importants, max 12 chiffres/formules/stats clés.`;
 
-    let json;
-    try { json = JSON.parse(raw); }
-    catch(e) { throw new Error("Format JSON invalide. Réessaie."); }
+    const dataP1  = await callAI(promptP1, 1400);
+    const structureRaw = dataP1.text.trim()
+      .replace(/^```json\s*/i,"").replace(/^```\s*/,"").replace(/\s*```$/,"");
+    let structure;
+    try { structure = JSON.parse(structureRaw); }
+    catch(_) { structure = { parties:[], termes:[], chiffres:[], contexte: texteP1.slice(0,300) }; }
+
+    // ── PASSE 2 : Génération fiche complète ────────────────────────────────
+    startProgressSim(45, 95, "Passe 2/2 — Rédaction de la fiche…", 18000);
+
+    const extrait = compresser(texte, 4000); // extrait pour contexte narratif
+    const promptP2 = `Tu es un professeur expert. Génère une fiche de révision complète et détaillée en JSON.
+Matière: ${matiere||"non précisée"} | Niveau: ${niveau}
+STRUCTURE DU COURS: ${JSON.stringify(structure)}
+EXTRAIT (contexte): ${extrait}
+
+JSON UNIQUEMENT (sans \`\`\`):
+{
+  "titre": "titre précis de la fiche",
+  "resume": [
+    "§1 Introduction : contexte, enjeux, définition générale du sujet (5-7 lignes)",
+    "§2 Concepts centraux : développement des notions principales avec leur logique (5-7 lignes)",
+    "§3 Mécanismes et outils : comment ça fonctionne, avec chiffres et exemples (5-7 lignes)",
+    "§4 Synthèse et points d'examen : liens entre les parties, pièges à connaître (4-5 lignes)"
+  ],
+  "notions": [
+    {"titre": "terme exact du cours", "definition": "définition complète 2-3 phrases avec exemple concret ou chiffre tiré du cours"}
+  ],
+  "plan": [copie exacte de structure.parties avec {"num":n,"titre":"titre exact","sous":["ss-titre exact"]}],
+  "memo_cles": [
+    {"icone":"📌","titre":"point clé","contenu":"explication approfondie 3-4 lignes, inclus chiffres/formules si présents","couleur":"purple"}
+  ],
+  "erreurs": ["erreur précise et fréquente liée au cours"],
+  "questions_exam": ["question probable à l'examen ?"],
+  "conseils": ["conseil de mémorisation adapté à cette matière"]
+}
+Règles STRICTES: 4 §résumé détaillés, 12-16 notions avec vraies définitions, plan = titres EXACTS, 6-8 memo_cles avec données chiffrées, 5-6 erreurs spécifiques, 5-6 questions exam, 5 conseils. Couleurs: purple/yellow/green/blue/red.`;
+
+    const dataP2 = await callAI(promptP2, 5500);
+    const json   = parseJSON(dataP2.text);
+    rawJSON = dataP2.text;
 
     stopProgress();
     setTimeout(() => {
@@ -1040,10 +1087,10 @@ Règles: 4 paragraphes résumé détaillés, 10-14 notions, titres du plan IDENT
     }, 400);
 
   } catch(e) {
-    stopProgress();
+    clearInterval(progressTimer);
+    setProgress(0, "");
     document.getElementById("err").classList.add("on");
-    document.getElementById("err-msg").textContent =
-      "Impossible de contacter l'IA. Vérifie ta connexion Internet.";
+    document.getElementById("err-msg").textContent = "Erreur lors de la génération.";
     document.getElementById("err-detail").textContent = e.message;
   }
 
