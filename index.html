@@ -803,7 +803,7 @@ async function callAI(prompt, maxTokens = 5000) {
     body: JSON.stringify({
       model: GROQ_MODEL,
       messages: [
-        { role: "system", content: "Tu es un tuteur expert. Réponds uniquement avec du JSON valide, sans texte avant ou après." },
+        { role: "system", content: "Tu es un tuteur expert. Réponds UNIQUEMENT avec du JSON valide. INTERDIT: backslash \\ suivi d'autre chose que n r t \" \\. Écris × → ≥ ≤ directement, jamais \\times \\to \\rightarrow. Pas de \\u sauf \\uXXXX avec 4 chiffres hex exacts." },
         { role: "user", content: prompt },
       ],
       max_tokens: maxTokens,
@@ -1084,40 +1084,51 @@ function parseJSON(raw) {
     .replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
 
   // Extraire uniquement le bloc JSON {…}
-  const start = s.indexOf('{');
-  const end   = s.lastIndexOf('}');
-  if (start !== -1 && end > start) s = s.slice(start, end + 1);
+  const i0 = s.indexOf('{'), i1 = s.lastIndexOf('}');
+  if (i0 !== -1 && i1 > i0) s = s.slice(i0, i1 + 1);
 
-  // Passe 1 : supprimer les séquences d'échappement invalides
-  // JSON valide : \" \\ \/ \b \f \n \r \t \uXXXX — tout le reste est illégal
-  s = s.replace(/\\([^"\\\/bfnrtu])/g, (_, ch) => ch);
+  // Passe 1 : corriger char par char à l'intérieur des chaînes JSON
+  // → gère les \uXXXX invalides, les \X illégaux, et les newlines/tabs littéraux
+  s = repairJSONStrings(s);
 
   try { return JSON.parse(s); }
-  catch(_) {
-    // Passe 2 : corriger les retours à la ligne/tabulations littéraux dans les chaînes
-    s = repairControlChars(s);
-    try { return JSON.parse(s); }
-    catch(e) { throw new Error(`Format JSON invalide : ${e.message.slice(0, 80)}. Réessaie.`); }
-  }
+  catch(e) { throw new Error(`Format JSON invalide : ${e.message.slice(0, 100)}. Réessaie.`); }
 }
 
-// Remplace les caractères de contrôle littéraux à l'intérieur des chaînes JSON
-function repairControlChars(s) {
-  let out = '', inStr = false;
-  for (let i = 0; i < s.length; i++) {
+// Parcourt le JSON caractère par caractère et répare les strings illégales
+function repairJSONStrings(s) {
+  const VALID_SINGLE = new Set(['"','\\','/','b','f','n','r','t']);
+  let out = '', inStr = false, i = 0;
+  while (i < s.length) {
     const c = s[i];
     if (!inStr) {
       out += c;
       if (c === '"') inStr = true;
-    } else {
-      if (c === '\\') { out += c + (s[++i] || ''); }
-      else if (c === '"') { out += c; inStr = false; }
-      else if (c === '\n') { out += '\\n'; }
-      else if (c === '\r') { out += '\\r'; }
-      else if (c === '\t') { out += '\\t'; }
-      else if (c.charCodeAt(0) < 0x20) { /* skip other control chars */ }
-      else { out += c; }
+      i++; continue;
     }
+    // On est dans une string JSON
+    if (c === '\\') {
+      const next = s[i + 1] || '';
+      if (next === 'u') {
+        // \uXXXX : valide seulement si les 4 prochains chars sont hex
+        const hex = s.slice(i + 2, i + 6);
+        if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+          out += s.slice(i, i + 6); i += 6; // \uXXXX valide, on garde
+        } else {
+          out += 'u'; i += 2; // \u invalide → juste 'u'
+        }
+      } else if (VALID_SINGLE.has(next)) {
+        out += c + next; i += 2; // séquence valide (\n \t \" \\ etc.)
+      } else {
+        out += next; i += 2; // \X invalide (\→ \× \( etc.) → juste X
+      }
+    } else if (c === '"') {
+      out += c; inStr = false; i++;
+    } else if (c === '\n') { out += '\\n'; i++; }
+    else if (c === '\r') { out += '\\r'; i++; }
+    else if (c === '\t') { out += '\\t'; i++; }
+    else if (c.charCodeAt(0) < 0x20) { i++; } // autres ctrl chars → saut
+    else { out += c; i++; }
   }
   return out;
 }
