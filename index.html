@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
 :root{
   --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--border:#252533;
@@ -52,11 +53,25 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}}
 
-/* PDF DROP */
-.drop{border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.88rem;position:relative;background:var(--bg2)}
+/* FILE DROP */
+.drop{border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.88rem;position:relative;background:var(--bg2)}
 .drop:hover,.drop.drag{border-color:var(--accent);color:var(--accent);background:var(--glow)}
 .drop .di{font-size:2.8rem;margin-bottom:10px}
 .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-formats{margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.drop-fmt{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px 9px;font-size:.7rem;color:var(--muted)}
+.files-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.file-item{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;font-size:.82rem;transition:border .2s}
+.file-item.ok{border-color:rgba(34,211,165,.35)}
+.file-item.err{border-color:rgba(248,113,113,.35)}
+.file-item.loading{border-color:rgba(124,111,255,.3)}
+.fi-icon{font-size:1.25rem;flex-shrink:0}
+.fi-info{flex:1;min-width:0}
+.fi-name{color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi-status{font-size:.74rem;color:var(--muted);margin-top:2px}
+.fi-status.ok{color:var(--green)}.fi-status.err{color:var(--red)}.fi-status.loading{color:var(--accent2)}
+.fi-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:2px 5px;border-radius:5px;transition:color .2s;flex-shrink:0}
+.fi-del:hover{color:var(--red)}
 .file-ok{margin-top:12px;background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.3);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--green);display:none}
 
 /* BTN */
@@ -435,21 +450,27 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
     <div class="card-title">Ton cours</div>
     <div class="tabs">
       <button class="tab on" onclick="switchTab('text',this)">📝 Texte</button>
-      <button class="tab" onclick="switchTab('pdf',this)">📄 PDF</button>
+      <button class="tab" onclick="switchTab('fichiers',this)">📁 Fichiers</button>
     </div>
     <div id="tp-text" class="tab-pane on">
       <label>Colle tes notes de cours ici</label>
       <textarea id="texte" placeholder="Colle ton cours ici… (polycopié, notes de TD, slides recopiés…)" oninput="updateCounter()"></textarea>
       <div class="char-counter" id="char-counter">0 / 14 000 caractères</div>
     </div>
-    <div id="tp-pdf" class="tab-pane">
+    <div id="tp-fichiers" class="tab-pane">
       <div class="drop" id="drop">
         <div class="di">📂</div>
-        <strong>Glisse ton PDF ici</strong><br/>
-        <span style="font-size:.8rem;margin-top:6px;display:block">ou clique pour choisir un fichier</span>
-        <input type="file" accept=".pdf" onchange="loadPDF(this.files[0])"/>
+        <strong>Glisse tes fichiers ici</strong><br/>
+        <span style="font-size:.8rem;margin-top:6px;display:block">ou clique pour choisir (plusieurs fichiers acceptés)</span>
+        <div class="drop-formats">
+          <span class="drop-fmt">📄 PDF</span>
+          <span class="drop-fmt">🖼️ JPG / PNG / WEBP</span>
+          <span class="drop-fmt">📝 Word .docx</span>
+          <span class="drop-fmt">📃 TXT / MD</span>
+        </div>
+        <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.docx,.txt,.md" onchange="ajouterFichiers(this.files)"/>
       </div>
-      <div class="file-ok" id="file-ok"></div>
+      <div class="files-list" id="files-list"></div>
     </div>
     <div class="grid2">
       <div>
@@ -662,9 +683,10 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
-const GROQ_KEY  = "gsk_" + "NLebVEtVakPkDSRSsqXjWGdyb3FYZ6MxaFvSremhYp0R4WLRzKQ5";
-const GROQ_URL  = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL= "llama-3.3-70b-versatile";
+const GROQ_KEY        = "gsk_" + "NLebVEtVakPkDSRSsqXjWGdyb3FYZ6MxaFvSremhYp0R4WLRzKQ5";
+const GROQ_URL        = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL      = "llama-3.3-70b-versatile";
+const GROQ_VISION_MDL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 async function callAI(prompt) {
   const resp = await fetch(GROQ_URL, {
@@ -679,7 +701,7 @@ async function callAI(prompt) {
         { role: "system", content: "Tu es un tuteur expert en méthodes d'apprentissage. Tu génères des fiches de révision claires et structurées." },
         { role: "user", content: prompt },
       ],
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: 0.4,
     }),
   });
@@ -688,8 +710,8 @@ async function callAI(prompt) {
   return { text: data.choices[0].message.content };
 }
 
-let pdfText = "";
-let rawJSON  = "";
+let uploadedFiles = []; // [{name, type, text, status}]
+let rawJSON = "";
 
 // XSS : échappe tout contenu de l'API avant injection HTML
 function esc(str) {
@@ -720,40 +742,171 @@ function nouvelleFiche() {
   document.getElementById("btn-new").classList.remove("visible");
   document.getElementById("texte").value = "";
   document.getElementById("matiere").value = "";
-  pdfText = ""; rawJSON = "";
+  uploadedFiles = []; rawJSON = "";
   updateCounter();
-  document.getElementById("file-ok").style.display = "none";
+  document.getElementById("files-list").innerHTML = "";
+  const fi = document.getElementById("file-input");
+  if (fi) fi.value = "";
   document.getElementById("notes-area").value = "";
   document.getElementById("notes-saved-label").textContent = "";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// ── PDF ──────────────────────────────────────────────────────────────────────
-async function loadPDF(file) {
-  if (!file) return;
-  const info = document.getElementById("file-ok");
-  info.style.display = "block";
-  info.textContent = "⏳ Lecture du PDF en cours…";
-  try {
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    let text = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page    = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map(x => x.str).join(" ") + "\n";
+// ── Fichier → icône ──────────────────────────────────────────────────────────
+function fileIcon(name) {
+  const ext = name.split(".").pop().toLowerCase();
+  if (["jpg","jpeg","png","webp","gif"].includes(ext)) return "🖼️";
+  if (ext === "pdf") return "📄";
+  if (ext === "docx") return "📝";
+  if (["txt","md"].includes(ext)) return "📃";
+  return "📁";
+}
+
+// ── Render files list ────────────────────────────────────────────────────────
+function renderFilesList() {
+  const list = document.getElementById("files-list");
+  list.innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item ${f.status}" id="fi-${i}">
+      <span class="fi-icon">${fileIcon(f.name)}</span>
+      <div class="fi-info">
+        <div class="fi-name">${esc(f.name)}</div>
+        <div class="fi-status ${f.status}" id="fi-status-${i}">${esc(f.statusMsg || "")}</div>
+      </div>
+      <button class="fi-del" onclick="supprimerFichier(${i})" title="Supprimer">✕</button>
+    </div>`).join("");
+}
+
+function supprimerFichier(i) {
+  uploadedFiles.splice(i, 1);
+  renderFilesList();
+}
+
+function updateFileStatus(i, status, msg) {
+  uploadedFiles[i].status    = status;
+  uploadedFiles[i].statusMsg = msg;
+  const el = document.getElementById(`fi-${i}`);
+  const st = document.getElementById(`fi-status-${i}`);
+  if (el) { el.className = `file-item ${status}`; }
+  if (st) { st.className = `fi-status ${status}`; st.textContent = msg; }
+}
+
+// ── Ajouter fichiers ─────────────────────────────────────────────────────────
+async function ajouterFichiers(fileList) {
+  const newFiles = Array.from(fileList);
+  for (const file of newFiles) {
+    const idx = uploadedFiles.length;
+    uploadedFiles.push({ name: file.name, type: file.type, text: "", status: "loading", statusMsg: "Lecture en cours…" });
+    renderFilesList();
+    try {
+      const text = await extraireTexte(file, idx);
+      uploadedFiles[idx].text = text;
+      updateFileStatus(idx, "ok", `✅ ${text.length.toLocaleString()} caractères extraits`);
+    } catch(e) {
+      updateFileStatus(idx, "err", `❌ ${e.message}`);
     }
-    pdfText = text.trim();
-    if (pdfText.length < pdf.numPages * 50) {
-      info.style.cssText = "display:block;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);border-radius:8px;padding:10px 14px;font-size:.82rem;margin-top:12px";
-      info.textContent = `⚠️ Ce PDF semble être un scan (image). L'IA ne peut pas lire les images — utilise un PDF avec du texte sélectionnable, ou colle ton cours dans l'onglet Texte.`;
-    } else {
-      info.style.cssText = "";
-      info.textContent = `✅ ${file.name} — ${pdf.numPages} page(s) | ${pdfText.length.toLocaleString()} caractères`;
-    }
-  } catch(e) {
-    info.textContent = "❌ Erreur : " + e.message;
   }
+  const fi = document.getElementById("file-input");
+  if (fi) fi.value = "";
+}
+
+// ── Extraction selon type ────────────────────────────────────────────────────
+async function extraireTexte(file, idx) {
+  const name = file.name.toLowerCase();
+  const ext  = name.split(".").pop();
+
+  if (ext === "pdf")  return await extrairePDF(file, idx);
+  if (["jpg","jpeg","png","webp","gif"].includes(ext)) return await extraireImage(file, idx);
+  if (ext === "docx") return await extraireDocx(file);
+  if (["txt","md"].includes(ext)) return await file.text();
+  throw new Error("Format non supporté");
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+async function extrairePDF(file, idx) {
+  updateFileStatus(idx, "loading", "Lecture du PDF…");
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    updateFileStatus(idx, "loading", `Page ${i} / ${pdf.numPages}…`);
+    const page    = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(x => x.str).join(" ") + "\n";
+  }
+  text = text.trim();
+  if (text.length < pdf.numPages * 50) {
+    // PDF scanné → on essaie la vision sur chaque page
+    updateFileStatus(idx, "loading", "PDF scanné — OCR en cours…");
+    return await ocrPDFScanne(pdf, idx);
+  }
+  return text;
+}
+
+// ── OCR PDF scanné (rend les pages en canvas puis envoie à vision) ────────────
+async function ocrPDFScanne(pdf, idx) {
+  let fullText = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    updateFileStatus(idx, "loading", `OCR page ${i} / ${pdf.numPages}…`);
+    const page     = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas   = document.createElement("canvas");
+    canvas.width   = viewport.width;
+    canvas.height  = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    const b64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+    const t   = await callVision(b64, "image/jpeg");
+    fullText += `\n--- Page ${i} ---\n${t}`;
+  }
+  return fullText.trim();
+}
+
+// ── Image → texte (vision LLM) ───────────────────────────────────────────────
+async function extraireImage(file, idx) {
+  updateFileStatus(idx, "loading", "Analyse de l'image…");
+  const b64  = await fileToBase64(file);
+  const mime = file.type || "image/jpeg";
+  return await callVision(b64, mime);
+}
+
+async function callVision(b64, mime) {
+  const resp = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
+    body: JSON.stringify({
+      model: GROQ_VISION_MDL,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
+          { type: "text", text: "Transcris intégralement tout le texte visible sur cette image de cours (titres, définitions, formules, schémas annotés, tableaux). Conserve la structure avec des sauts de ligne. Texte brut uniquement, sans commentaires." }
+        ]
+      }],
+      max_tokens: 4096,
+      temperature: 0.1,
+    }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+  return data.choices[0].message.content;
+}
+
+// ── DOCX ─────────────────────────────────────────────────────────────────────
+async function extraireDocx(file) {
+  if (typeof mammoth === "undefined") throw new Error("Bibliothèque Word non chargée");
+  const buf    = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  if (!result.value || result.value.length < 30) throw new Error("Document Word vide ou illisible");
+  return result.value;
+}
+
+// ── Utilitaire base64 ─────────────────────────────────────────────────────────
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => resolve(r.result.split(",")[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
 }
 
 // ── Drag & Drop ──────────────────────────────────────────────────────────────
@@ -762,7 +915,7 @@ dz.addEventListener("dragover",  e => { e.preventDefault(); dz.classList.add("dr
 dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
 dz.addEventListener("drop", e => {
   e.preventDefault(); dz.classList.remove("drag");
-  if (e.dataTransfer.files[0]) loadPDF(e.dataTransfer.files[0]);
+  if (e.dataTransfer.files.length) ajouterFichiers(e.dataTransfer.files);
 });
 
 // ── Progress bar simulation ─────────────────────────────────────────────────
@@ -799,9 +952,18 @@ function stopProgress() {
 
 // ── Générer ─────────────────────────────────────────────────────────────────
 async function generer() {
-  const isPDF  = document.querySelector(".tab.on").textContent.includes("PDF");
-  const texte  = isPDF ? pdfText : document.getElementById("texte").value.trim();
-  if (!texte || texte.length < 80) { alert("⚠️ Colle un cours plus long (minimum 80 caractères)."); return; }
+  const isFichiers = document.querySelector(".tab.on").textContent.includes("Fichiers");
+  let texte;
+  if (isFichiers) {
+    const ready = uploadedFiles.filter(f => f.status === "ok" && f.text);
+    if (!ready.length) { alert("⚠️ Aucun fichier valide. Ajoute au moins un fichier correctement chargé."); return; }
+    const loading = uploadedFiles.filter(f => f.status === "loading");
+    if (loading.length) { alert("⚠️ Des fichiers sont encore en cours de lecture. Attends qu'ils soient prêts."); return; }
+    texte = ready.map((f, i) => `=== Fichier ${i+1} : ${f.name} ===\n${f.text}`).join("\n\n");
+  } else {
+    texte = document.getElementById("texte").value.trim();
+  }
+  if (!texte || texte.length < 80) { alert("⚠️ Le contenu est trop court (minimum 80 caractères)."); return; }
 
   const matiere = document.getElementById("matiere").value;
   const niveau  = document.getElementById("niveau").value;
@@ -814,51 +976,76 @@ async function generer() {
   document.getElementById("gen-bar").style.width = "5%";
   startProgress();
 
-  const prompt = `Analyse ce cours et génère une fiche de révision complète en JSON.
+  const prompt = `Tu es un professeur expert et un pédagogue hors pair. Analyse ce cours en profondeur et génère une fiche de révision très complète et détaillée en JSON.
 Matière : ${matiere || "non précisée"}
 Niveau : ${niveau}
 
-Cours :
+Cours (peut provenir de plusieurs fichiers) :
 ---
-${texte.slice(0, 14000)}
+${texte.slice(0, 18000)}
 ---
+
+CONSIGNES IMPORTANTES :
+- Le résumé doit être DÉTAILLÉ : 4 à 6 paragraphes substantiels (5-8 lignes chacun), couvrant TOUTES les notions importantes
+- Les définitions des notions doivent être complètes (2-4 phrases), avec exemples si pertinent
+- Le mémo clés doit contenir 6 à 8 points avec des explications approfondies (3-5 lignes)
+- Couvre ABSOLUMENT toutes les parties du cours, sans rien omettre
+- Les erreurs et questions d'examen doivent être très spécifiques au contenu fourni
+- Génère au moins 6 conseils de mémorisation adaptés à la matière
 
 Réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans \`\`\`) :
 {
-  "titre": "Titre court et précis de la fiche",
-  "resume": ["paragraphe 1 développé", "paragraphe 2 développé", "paragraphe 3 développé"],
+  "titre": "Titre précis et complet de la fiche",
+  "resume": [
+    "Paragraphe 1 : introduction et contexte général du cours, les grandes idées directrices (5-8 lignes détaillées)",
+    "Paragraphe 2 : développement des concepts principaux avec leurs liens logiques (5-8 lignes)",
+    "Paragraphe 3 : approfondissement des notions techniques ou théoriques (5-8 lignes)",
+    "Paragraphe 4 : applications, exemples concrets, implications pratiques (5-8 lignes)",
+    "Paragraphe 5 : synthèse et points de vigilance pour les examens (4-6 lignes)"
+  ],
   "notions": [
-    {"titre": "Nom de la notion", "definition": "Définition claire et concise"},
-    ...entre 8 et 14 notions couvrant l'intégralité du cours...
+    {"titre": "Nom de la notion", "definition": "Définition complète et précise en 2-3 phrases. Inclut les caractéristiques principales et un exemple si utile."},
+    ...entre 12 et 18 notions couvrant TOUTE la matière...
   ],
   "plan": [
-    {"num": 1, "titre": "Grande partie", "sous": ["sous-partie A", "sous-partie B"]},
-    ...toutes les parties du cours...
+    {"num": 1, "titre": "Grande partie du cours", "sous": ["Sous-partie A détaillée", "Sous-partie B détaillée", "Sous-partie C si applicable"]},
+    ...toutes les parties du cours sans exception...
   ],
   "memo_cles": [
-    {"icone": "🧬", "titre": "Point essentiel 1", "contenu": "Ce qu'il faut absolument retenir", "couleur": "purple"},
-    {"icone": "⚗️", "titre": "Point essentiel 2", "contenu": "Ce qu'il faut absolument retenir", "couleur": "yellow"},
-    {"icone": "📌", "titre": "Point essentiel 3", "contenu": "Ce qu'il faut absolument retenir", "couleur": "green"},
-    {"icone": "🔬", "titre": "Point essentiel 4", "contenu": "Ce qu'il faut absolument retenir", "couleur": "blue"},
-    {"icone": "💡", "titre": "Point essentiel 5", "contenu": "Ce qu'il faut absolument retenir", "couleur": "red"}
+    {"icone": "🧬", "titre": "Point essentiel 1", "contenu": "Explication approfondie de ce qu'il faut absolument retenir, avec le pourquoi et comment (3-5 lignes)", "couleur": "purple"},
+    {"icone": "⚗️", "titre": "Point essentiel 2", "contenu": "Explication détaillée avec exemples ou formules clés", "couleur": "yellow"},
+    {"icone": "📌", "titre": "Point essentiel 3", "contenu": "Ce qu'il faut retenir, les pièges à éviter liés à ce point", "couleur": "green"},
+    {"icone": "🔬", "titre": "Point essentiel 4", "contenu": "Explication avec lien vers les autres notions du cours", "couleur": "blue"},
+    {"icone": "💡", "titre": "Point essentiel 5", "contenu": "Application pratique ou implication concrète à retenir", "couleur": "red"},
+    {"icone": "🎯", "titre": "Point essentiel 6", "contenu": "Point souvent mal compris, explication clarifiée", "couleur": "purple"},
+    {"icone": "📊", "titre": "Point essentiel 7", "contenu": "Chiffres, formules, ou repères quantitatifs importants", "couleur": "yellow"}
   ],
   "erreurs": [
-    "Erreur classique ou confusion fréquente que font les étudiants sur ce sujet",
-    "Autre erreur typique à éviter à l'examen",
-    "Piège ou mauvaise interprétation courante",
-    "Confusion fréquente entre deux notions du cours",
-    "Point souvent oublié ou mal compris"
+    "Confusion très fréquente entre [notion A] et [notion B] : explication de la différence exacte",
+    "Erreur de raisonnement classique : décrire précisément l'erreur et comment l'éviter",
+    "Piège d'examen typique dans cette matière : ce que les correcteurs pénalisent",
+    "Mauvaise interprétation courante d'une notion clé du cours",
+    "Point souvent oublié en situation d'examen et qui coûte des points",
+    "Erreur de méthode fréquente dans les exercices ou rédactions sur ce sujet"
   ],
   "questions_exam": [
-    "Question ouverte probable posée par un professeur à l'examen ?",
-    "Autre question typique de ce chapitre ?",
-    "Question de réflexion ou d'application ?",
-    "Question de définition ou d'explication ?",
-    "Question de comparaison ou d'analyse ?"
+    "Question de définition : [question précise liée au contenu du cours] ?",
+    "Question d'explication : [question nécessitant une réponse développée sur un concept clé] ?",
+    "Question d'application : [cas pratique ou mise en situation liée au cours] ?",
+    "Question de comparaison : [comparer deux notions du cours] ?",
+    "Question d'analyse : [question nécessitant une réflexion critique sur le sujet] ?",
+    "Question de synthèse : [question englobant plusieurs parties du cours] ?"
   ],
-  "conseils": ["Conseil mémorisation 1", "Conseil mémorisation 2", "Conseil mémorisation 3"]
+  "conseils": [
+    "Conseil de mémorisation 1 adapté à cette matière spécifique",
+    "Conseil de mémorisation 2 (technique d'ancrage, association)",
+    "Conseil de révision 3 (timing, répétition espacée)",
+    "Conseil pour les exercices pratiques ou applications",
+    "Conseil pour l'organisation de la révision de ce chapitre",
+    "Conseil pour éviter les pièges à l'examen dans cette matière"
+  ]
 }
-Les couleurs disponibles pour memo_cles sont : purple, yellow, green, blue, red. Couvre TOUTES les parties du cours.`;
+Les couleurs disponibles pour memo_cles sont : purple, yellow, green, blue, red. Sois exhaustif et très détaillé.`;
 
   try {
     const data = await callAI(prompt);
