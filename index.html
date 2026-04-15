@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
   --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--border:#252533;
@@ -224,10 +225,15 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 .char-counter.warn{color:var(--yellow)}
 .char-counter.danger{color:var(--red)}
 
-/* Bouton flottant */
+/* Boutons flottants */
 .btn-new{position:fixed;bottom:28px;right:28px;z-index:300;background:linear-gradient(135deg,var(--accent),#9d7dff);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(124,111,255,.5);display:none;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s}
 .btn-new:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(124,111,255,.6)}
 .btn-new.visible{display:flex}
+.btn-pdf-dl{position:fixed;bottom:28px;right:200px;z-index:300;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(34,197,94,.45);display:none;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s}
+.btn-pdf-dl:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(34,197,94,.6)}
+.btn-pdf-dl.visible{display:flex}
+.btn-pdf-dl.loading-pdf{opacity:.7;cursor:wait}
+@media(max-width:520px){.btn-pdf-dl{right:unset;left:28px}}
 
 /* HISTORIQUE */
 .histo-section{background:rgba(22,22,31,.75);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)}
@@ -350,6 +356,20 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
 .pom-btn.primary{background:rgba(124,111,255,.2);border-color:rgba(124,111,255,.4);color:var(--accent2)}
 .pom-btn.primary:hover{background:rgba(124,111,255,.35)}
 .pom-cycles-label{font-size:.7rem;color:var(--muted);text-align:center}
+
+/* PDF export via html2pdf */
+.pdf-export,.pdf-export *{color:#111 !important;background:transparent !important;-webkit-text-fill-color:#111 !important;box-shadow:none !important;backdrop-filter:none !important}
+.pdf-export .memo-top{background:#f5f3ff !important;border:1px solid #c4b5fd !important}
+.pdf-export .memo-top h2{-webkit-text-fill-color:#4c1d95 !important;background:none !important}
+.pdf-export .sec{border:1px solid #e5e7eb !important;background:#fff !important}
+.pdf-export .sec-head{background:#f9fafb !important;border-bottom:1px solid #e5e7eb !important}
+.pdf-export .cc,.pdf-export .info-card,.pdf-export .tip,.pdf-export .erreur-item,.pdf-export .exam-item{background:#f9fafb !important;border-color:#e5e7eb !important}
+.pdf-export .info-card.purple{background:#f5f3ff !important;border-color:#c4b5fd !important}
+.pdf-export .info-card.yellow{background:#fefce8 !important;border-color:#fde68a !important}
+.pdf-export .info-card.green{background:#f0fdf4 !important;border-color:#86efac !important}
+.pdf-export .info-card.blue{background:#eff6ff !important;border-color:#93c5fd !important}
+.pdf-export .info-card.red{background:#fff1f2 !important;border-color:#fca5a5 !important}
+.pdf-export .fc-section,.pdf-export .quiz-section,.pdf-export .notes-section{display:none !important}
 
 /* Print CSS – serré et propre */
 @media print{
@@ -519,7 +539,8 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
       <div class="memo-actions">
         <button class="btn-sm" onclick="ouvrirFlashcards()">🃏 Flashcards</button>
         <button class="btn-sm" onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">❓ Quiz</button>
-        <button class="btn-sm" onclick="window.print()">🖨️ Imprimer / PDF</button>
+        <button class="btn-sm" onclick="telechargerPDF()" id="btn-pdf-inline">⬇️ PDF</button>
+        <button class="btn-sm" onclick="window.print()">🖨️ Imprimer</button>
       </div>
     </div>
 
@@ -679,6 +700,7 @@ textarea{min-height:220px;resize:vertical;line-height:1.65}
   </div><!-- /memo -->
 </div><!-- /wrap -->
 
+<button class="btn-pdf-dl" id="btn-pdf-dl" onclick="telechargerPDF()">⬇️ Télécharger PDF</button>
 <button class="btn-new" id="btn-new" onclick="nouvelleFiche()">✨ Nouvelle fiche</button>
 
 <script>
@@ -701,7 +723,7 @@ async function callAI(prompt) {
         { role: "system", content: "Tu es un tuteur expert en méthodes d'apprentissage. Tu génères des fiches de révision claires et structurées." },
         { role: "user", content: prompt },
       ],
-      max_tokens: 8192,
+      max_tokens: 32768,
       temperature: 0.4,
     }),
   });
@@ -740,6 +762,7 @@ function updateCounter() {
 function nouvelleFiche() {
   document.getElementById("memo").classList.remove("on");
   document.getElementById("btn-new").classList.remove("visible");
+  document.getElementById("btn-pdf-dl").classList.remove("visible");
   document.getElementById("texte").value = "";
   document.getElementById("matiere").value = "";
   uploadedFiles = []; rawJSON = "";
@@ -982,14 +1005,16 @@ Niveau : ${niveau}
 
 Cours (peut provenir de plusieurs fichiers) :
 ---
-${texte.slice(0, 18000)}
+${texte.slice(0, 50000)}
 ---
 
 CONSIGNES IMPORTANTES :
-- Le résumé doit être DÉTAILLÉ : 4 à 6 paragraphes substantiels (5-8 lignes chacun), couvrant TOUTES les notions importantes
-- Les définitions des notions doivent être complètes (2-4 phrases), avec exemples si pertinent
-- Le mémo clés doit contenir 6 à 8 points avec des explications approfondies (3-5 lignes)
-- Couvre ABSOLUMENT toutes les parties du cours, sans rien omettre
+- Lis INTÉGRALEMENT tout le contenu fourni avant de générer quoi que ce soit
+- Si le cours contient des tableaux ou formules, retranscris-les fidèlement dans les notions et le mémo clés
+- Le résumé doit être DÉTAILLÉ : 4 à 6 paragraphes substantiels (5-8 lignes chacun), couvrant TOUTES les parties et sous-parties
+- Les définitions des notions doivent être complètes (2-4 phrases), avec chiffres/exemples tirés du cours si présents
+- Le mémo clés doit contenir 6 à 8 points avec des explications approfondies incluant les formules ou données chiffrées du cours
+- Couvre ABSOLUMENT toutes les pages/sections, sans rien omettre, même les dernières pages
 - Les erreurs et questions d'examen doivent être très spécifiques au contenu fourni
 - Génère au moins 6 conseils de mémorisation adaptés à la matière
 
@@ -1008,8 +1033,9 @@ Réponds UNIQUEMENT avec un objet JSON valide (sans texte avant/après, sans \`\
     ...entre 12 et 18 notions couvrant TOUTE la matière...
   ],
   "plan": [
-    {"num": 1, "titre": "Grande partie du cours", "sous": ["Sous-partie A détaillée", "Sous-partie B détaillée", "Sous-partie C si applicable"]},
-    ...toutes les parties du cours sans exception...
+    {"num": 1, "titre": "Titre exact de la partie 1 tel qu'il apparaît dans le document", "sous": ["Titre exact de la sous-partie I", "Titre exact de la sous-partie II", "Titre exact de la sous-partie III si applicable"]},
+    {"num": 2, "titre": "Titre exact de la partie 2", "sous": ["Sous-partie A", "Sous-partie B"]},
+    ...reproduis FIDÈLEMENT la structure et les titres du document original, sans renommer ni regrouper...
   ],
   "memo_cles": [
     {"icone": "🧬", "titre": "Point essentiel 1", "contenu": "Explication approfondie de ce qu'il faut absolument retenir, avec le pourquoi et comment (3-5 lignes)", "couleur": "purple"},
@@ -1065,6 +1091,7 @@ Les couleurs disponibles pour memo_cles sont : purple, yellow, green, blue, red.
       afficherMemo(json, matiere, niveau);
       sauvegarderHistorique(json, matiere, niveau);
       document.getElementById("btn-new").classList.add("visible");
+      document.getElementById("btn-pdf-dl").classList.add("visible");
     }, 400);
 
   } catch(e) {
@@ -1213,6 +1240,7 @@ function restaurerFiche(index) {
   document.getElementById("niveau").value = f.niveau;
   afficherMemo(f.json, f.matiere, f.niveau);
   document.getElementById("btn-new").classList.add("visible");
+  document.getElementById("btn-pdf-dl").classList.add("visible");
 }
 
 function toggleHistorique() {
@@ -1453,6 +1481,42 @@ function relancerQuiz() {
   quizScore = 0;
   document.getElementById("quiz-score").style.display = "none";
   afficherQuestion();
+}
+
+// ── Télécharger PDF ───────────────────────────────────────────────────────────
+async function telechargerPDF() {
+  if (typeof html2pdf === "undefined") {
+    alert("⚠️ Librairie PDF non chargée. Utilise le bouton Imprimer à la place.");
+    return;
+  }
+  const btn1 = document.getElementById("btn-pdf-dl");
+  const btn2 = document.getElementById("btn-pdf-inline");
+  [btn1, btn2].forEach(b => { if(b) { b.classList.add("loading-pdf"); b.textContent = "⏳ Génération…"; } });
+
+  const el = document.getElementById("memo");
+  const titre = document.getElementById("memo-titre").textContent || "fiche-memo";
+
+  const opt = {
+    margin:       [10, 10, 12, 10],
+    filename:     titre.replace(/[^a-zA-Z0-9À-ÿ\s]/g, "").trim().replace(/\s+/g, "_") + ".pdf",
+    image:        { type: "jpeg", quality: 0.95 },
+    html2canvas:  { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+    jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak:    { mode: ["avoid-all", "css", "legacy"] },
+  };
+
+  // Applique temporairement un fond blanc pour le rendu
+  el.style.setProperty("--memo-export", "1");
+  el.classList.add("pdf-export");
+
+  try {
+    await html2pdf().set(opt).from(el).save();
+  } finally {
+    el.classList.remove("pdf-export");
+    [btn1, btn2].forEach(b => { if(b) { b.classList.remove("loading-pdf"); } });
+    if(btn1) btn1.innerHTML = "⬇️ Télécharger PDF";
+    if(btn2) btn2.innerHTML = "⬇️ PDF";
+  }
 }
 
 // ── Pomodoro ──────────────────────────────────────────────────────────────────
